@@ -1,0 +1,18 @@
+Metadata-Version: 2.4
+Name: term_structure
+Version: 0.1.0
+Summary: Term structure modeling package
+Author-email: Your Name <your.email@example.com>
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: matplotlib
+Requires-Dist: seaborn
+Provides-Extra: dev
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+
+# Term Structure Modeling
+
+A Python package for term structure modeling and calibration.
