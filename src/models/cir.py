@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar
+from typing import Tuple, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -13,28 +13,38 @@ class CIRParams(Parameters):
     # Fixed parameter
     sigma: float = 0.01
 
-    def __init__(
-        self, r0: float, kappa: float, theta: float, sigma: Optional[float] = None
-    ) -> None:
+    def __init__(self, r0: float, kappa: float, theta: float, sigma: float) -> None:
         self.r0 = r0
         self.kappa = kappa
         self.theta = theta
-        if sigma is not None:
-            self.sigma = sigma  # Update class variable if provided
+        self.sigma = sigma
 
     def to_array(self) -> NDArray[np.float64]:
-        # Only include parameters to be calibrated
-        return np.array([self.r0, self.kappa, self.theta], dtype=np.float64)
+        return np.array([self.r0, self.kappa, self.theta, self.sigma], dtype=np.float64)
 
     @classmethod
     def from_array(cls, arr: NDArray[np.float64]) -> "CIRParams":  # type: ignore
-        # Keep sigma fixed, only update other parameters
-        return cls(arr[0], arr[1], arr[2])
+        return cls(*arr.tolist())
+
+    @classmethod
+    def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+        lower = np.array([-np.inf, -np.inf, -np.inf, 0.001])
+        upper = np.array([np.inf, np.inf, np.inf, np.inf])
+        return lower, upper
 
 
 class CIR(ShortRateModel[CIRParams]):
     def __init__(self, params: CIRParams) -> None:
         self._params = params
+
+    def __str__(self) -> str:
+        return (
+            f"--- CIR ---\n"
+            f"r0={self._params.r0}\n"
+            f"kappa={self._params.kappa}\n"
+            f"theta={self._params.theta}\n"
+            f"sigma={self._params.sigma}\n"
+        )
 
     def params(self) -> CIRParams:
         return self._params

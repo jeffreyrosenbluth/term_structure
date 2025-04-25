@@ -1,12 +1,14 @@
 import math
-from typing import TypeVar
+from typing import Tuple, TypeVar
 
 import numpy as np
+from numpy.typing import NDArray
 
 from src.core.engine import PricingEngine
 from src.core.model import ShortRateModel
 from src.core.parameter import Parameters
 from src.models.cir import CIRParams
+from src.models.cir2 import CIR2Params
 from src.models.g2 import G2Params
 from src.models.vasicek import VasicekParams
 
@@ -47,7 +49,6 @@ class ClosedFormCIR(PricingEngine[CIRParams]):
         return float(A_T * exp_term_P)
 
 
-# Engine ----------------------------------------------------------------
 class ClosedFormG2(PricingEngine[G2Params]):
     def P(self, model: ShortRateModel[G2Params], T: float) -> float:
         def _B(h: float, t: float) -> float:
@@ -72,3 +73,24 @@ class ClosedFormG2(PricingEngine[G2Params]):
         clipped_exp = np.clip(exponent, -max_exp, max_exp)
 
         return float(np.exp(clipped_exp))
+
+
+class ClosedFormCIR2(PricingEngine[CIR2Params]):
+    def P(self, model: ShortRateModel[CIR2Params], T: float) -> float:
+        def _cir_AB(
+            kappa: float, theta: float, sigma: float, t: NDArray[np.float64]
+        ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+            gamma = math.sqrt(kappa * kappa + 2.0 * sigma * sigma)
+            exp_gt = np.exp(gamma * t)
+            denom = (gamma + kappa) * (exp_gt - 1.0) + 2.0 * gamma
+            B = 2.0 * (exp_gt - 1.0) / denom
+            A = (2.0 * gamma * np.exp((gamma + kappa) * t / 2.0) / denom) ** (
+                2.0 * kappa * theta / (sigma * sigma)
+            )
+            return A, B
+
+        p: CIR2Params = model.params()
+        A1, B1 = _cir_AB(p.kappa1, p.theta1, p.sigma1, T)
+        A2, B2 = _cir_AB(p.kappa2, p.theta2, p.sigma2, T)
+
+        return float(A1 * A2 * np.exp(-B1 * p.r0_1 - B2 * p.r0_2))

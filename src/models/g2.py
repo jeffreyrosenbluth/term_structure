@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar
+from typing import Tuple, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -10,40 +10,53 @@ G2P = TypeVar("G2P", bound="G2Params")
 
 
 class G2Params(Parameters):
-    sigma_x: float = 0.05
-    sigma_y: float = 0.05
-
     def __init__(
         self,
-        r0: float,
         a: float,
         b: float,
         rho: float,
         phi: float,
-        sigma_x: Optional[float] = None,
-        sigma_y: Optional[float] = None,
+        sigma_x: float,
+        sigma_y: float,
     ) -> None:
-        self.r0 = r0
         self.a = a
         self.b = b
         self.rho = rho
         self.phi = phi
-        if sigma_x is not None:
-            self.sigma_x = sigma_x
-        if sigma_y is not None:
-            self.sigma_y = sigma_y
+        self.sigma_x = sigma_x
+        self.sigma_y = sigma_y
 
     def to_array(self) -> NDArray[np.float64]:
-        return np.array([self.r0, self.a, self.b, self.rho, self.phi], dtype=np.float64)
+        return np.array(
+            [self.a, self.b, self.rho, self.phi, self.sigma_x, self.sigma_y],
+            dtype=np.float64,
+        )
 
     @classmethod
     def from_array(cls, a: NDArray[np.float64]) -> "G2Params":  # type: ignore
-        return cls(a[0], a[1], a[2], a[3], a[4])
+        return cls(*a.tolist())
+
+    @classmethod
+    def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+        lower = np.array([0.0, 0.0, -1.0, -np.inf, 0.001, 0.001])
+        upper = np.array([np.inf, np.inf, 1.0, np.inf, np.inf, 1.0])
+        return lower, upper
 
 
 class G2(ShortRateModel[G2Params]):
     def __init__(self, params: G2Params) -> None:
         self._params = params
+
+    def __str__(self) -> str:
+        return (
+            f"--- G2 ---\n"
+            f"a={self._params.a}\n"
+            f"b={self._params.b}\n"
+            f"rho={self._params.rho}\n"
+            f"phi={self._params.phi}\n"
+            f"sigma_x={self._params.sigma_x}\n"
+            f"sigma_y={self._params.sigma_y}\n"
+        )
 
     def params(self) -> G2Params:
         return self._params
