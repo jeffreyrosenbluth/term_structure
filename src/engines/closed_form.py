@@ -51,28 +51,45 @@ class ClosedFormCIR(PricingEngine[CIRParams]):
 
 class ClosedFormG2(PricingEngine[G2Params]):
     def P(self, model: ShortRateModel[G2Params], T: float) -> float:
-        def _B(h: float, t: float) -> float:
-            return (1.0 - math.exp(-h * t)) / h if h > 1e-12 else t
+        # def _B(h: float, t: float) -> float:
+        #     return (1.0 - math.exp(-h * t)) / h if h > 1e-12 else t
 
+        # p = model.params()
+        # a, b, sx, sy, rho, phi = p.a, p.b, p.sigma_x, p.sigma_y, p.rho, p.phi
+
+        # B_a = _B(a, T)
+        # B_b = _B(b, T)
+
+        # # Prevent overflow in variance calculations
+        # var_x = sx**2 / (2 * a) * (1.0 - np.exp(-2 * a * T))
+        # var_y = sy**2 / (2 * b) * (1.0 - np.exp(-2 * b * T))
+        # cov_xy = rho * sx * sy / (a + b) * (1.0 - np.exp(-(a + b) * T))
+
+        # V = (B_a**2) * var_x + (B_b**2) * var_y + 2 * B_a * B_b * cov_xy
+
+        # # Clip the exponent to prevent overflow
+        # exponent = -phi * T + 0.5 * V
+        # max_exp = 700  # np.exp(700) is still finite
+        # clipped_exp = np.clip(exponent, -max_exp, max_exp)
+
+        # return float(np.exp(clipped_exp)):
         p = model.params()
-        a, b, sx, sy, rho, phi = p.a, p.b, p.sigma_x, p.sigma_y, p.rho, p.phi
-
-        B_a = _B(a, T)
-        B_b = _B(b, T)
-
-        # Prevent overflow in variance calculations
-        var_x = sx**2 / (2 * a) * (1.0 - np.exp(-2 * a * T))
-        var_y = sy**2 / (2 * b) * (1.0 - np.exp(-2 * b * T))
-        cov_xy = rho * sx * sy / (a + b) * (1.0 - np.exp(-(a + b) * T))
-
-        V = (B_a**2) * var_x + (B_b**2) * var_y + 2 * B_a * B_b * cov_xy
-
-        # Clip the exponent to prevent overflow
-        exponent = -phi * T + 0.5 * V
-        max_exp = 700  # np.exp(700) is still finite
-        clipped_exp = np.clip(exponent, -max_exp, max_exp)
-
-        return float(np.exp(clipped_exp))
+        a, b, sigma_x, sigma_y, rho, phi = p.a, p.b, p.sigma_x, p.sigma_y, p.rho, p.phi
+        term1 = (sigma_x**2 / a**2) * (
+            T + (2 / a) * np.exp(-a * T) - (1 / (2 * a)) * np.exp(-2 * a * T) - (3 / (2 * a))
+        )
+        term2 = (sigma_y**2 / b**2) * (
+            T + (2 / b) * np.exp(-b * T) - (1 / (2 * b)) * np.exp(-2 * b * T) - (3 / (2 * b))
+        )
+        term3 = (2 * rho * sigma_x * sigma_y / (a * b)) * (
+            T
+            + (np.exp(-a * T) - 1) / a
+            + (np.exp(-b * T) - 1) / b
+            - (np.exp(-(a + b) * T) - 1) / (a + b)
+        )
+        V = term1 + term2 + term3
+        A = phi * T - 0.5 * V
+        return float(np.exp(A))
 
 
 class ClosedFormCIR2(PricingEngine[CIR2Params]):

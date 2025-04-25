@@ -38,8 +38,8 @@ class G2Params(Parameters):
 
     @classmethod
     def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-        lower = np.array([0.0, 0.0, -1.0, -np.inf, 0.001, 0.001])
-        upper = np.array([np.inf, np.inf, 1.0, np.inf, np.inf, 1.0])
+        lower = np.array([-np.inf, -np.inf, -1.0, -np.inf, 0.0001, 0.0001])
+        upper = np.array([np.inf, np.inf, 1.0, np.inf, 1.0, 1.0])
         return lower, upper
 
 

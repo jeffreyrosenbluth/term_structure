@@ -23,6 +23,7 @@ def _():
     from src.models.cir import CIR, CIRParams
     from src.models.g2 import G2, G2Params
     from src.models.vasicek import Vasicek, VasicekParams
+    from src.calibration_strategies.bootstrap_g2 import sequential_bootstrap_g2
     from src.models.cir2 import CIR2, CIR2Params
     from src.optim.least_squares import SciPyLeastSquares
 
@@ -90,11 +91,12 @@ def _(
     Vasicek,
     VasicekParams,
 ):
-    market_data = [(1.0, 0.0175), (5.0, 0.0155), (10.0, 0.0168), (30.0, 0.0212)]
+    market_data = [(0.25, 0.04), (2.0, 0.041), (10.0, 0.045), (30.0, 0.05)]
+    # market_data = [(1.0, 0.0175), (5.0, 0.0155), (10.0, 0.0168), (30.0, 0.0212)]
 
     optimizer = SciPyLeastSquares()
 
-    g2_params0 = G2Params(a=0.001, b=0.001, rho=0.0, phi=0, sigma_x=0.01, sigma_y=0.01)
+    g2_params0 = G2Params(a=0.01, b=0.05, rho=-0.5, phi=0.02, sigma_x=0.05, sigma_y=0.05)
     g2_model = G2(g2_params0)
     g2_engine = ClosedFormG2()
     g2_calib = Calibrator(g2_model, g2_engine, optimizer)
