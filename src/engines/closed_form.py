@@ -1,18 +1,23 @@
 import math
-from typing import Tuple, TypeVar
+from typing import Tuple
 
 import numpy as np
 from numpy.typing import NDArray
 
 from src.core.engine import PricingEngine
 from src.core.model import ShortRateModel
-from src.core.parameter import Parameters
 from src.models.cir import CIRParams
 from src.models.cir2 import CIR2Params
 from src.models.g2 import G2Params
+from src.models.merton import MertonParams
 from src.models.vasicek import VasicekParams
 
-P = TypeVar("P", bound=Parameters)
+
+class ClosedFormMerton(PricingEngine[MertonParams]):
+    def P(self, model: ShortRateModel[MertonParams], T: float) -> float:
+        p = model.params()
+        r0, mu, sigma = p.r0, p.mu, p.sigma
+        return float(np.exp(-r0 * T - 0.5 * mu * T**2 + sigma**2 * T**3 / 6.0))
 
 
 class ClosedFormVasicek(PricingEngine[VasicekParams]):
