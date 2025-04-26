@@ -5,7 +5,7 @@ from numpy.typing import NDArray
 
 from src.core.engine import PricingEngine
 from src.core.model import ShortRateModel
-from src.core.parameter import Parameters  # Protocol with .bounds()
+from src.core.parameter import Parameters
 
 P = TypeVar("P", bound=Parameters)
 
@@ -15,7 +15,7 @@ class Calibrator(Generic[P]):
         self,
         model: ShortRateModel[P],
         engine: PricingEngine[P],
-        solver: Any,  # e.g. SciPyLeastSquares
+        solver: Any,
     ) -> None:
         self.model = model
         self.engine = engine
@@ -26,22 +26,17 @@ class Calibrator(Generic[P]):
 
         def residuals(theta: NDArray[np.float64]) -> NDArray[np.float64]:
             params_cls = type(self.model.params())
-            self.model.update_params(params_cls.from_array(theta))  # CHANGED
+            self.model.update_params(params_cls.from_array(theta))
             prices = np.array([self.engine.P(self.model, ti) for ti in t])
             return self.engine.spot_rate(prices, t) - y
 
-        # ---------------------------------------------------------------
-
-        # ---- NEW: fetch hard-wired parameter bounds --------------------
-        lower, upper = self.model.params().bounds()  # NEW
+        lower, upper = self.model.params().bounds()
 
         theta0 = self.model.params().to_array()
         theta_star = self.solver.minimize(
             theta0,
             residuals,
-            bounds=(lower, upper),  # NEW  ← forwarded to solver
+            bounds=(lower, upper),
         )
-        # ----------------------------------------------------------------
-
         params_cls = type(self.model.params())
-        self.model.update_params(params_cls.from_array(theta_star))  # CHANGED
+        self.model.update_params(params_cls.from_array(theta_star))

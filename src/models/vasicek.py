@@ -17,17 +17,15 @@ class VasicekParams(Parameters):
         self.sigma = sigma
 
     def to_array(self) -> NDArray[np.float64]:
-        # Only include parameters to be calibrated
         return np.array([self.r0, self.kappa, self.theta, self.sigma], dtype=np.float64)
 
     @classmethod
     def from_array(cls, arr: NDArray[np.float64]) -> "VasicekParams":  # type: ignore
-        # Keep sigma fixed, only update other parameters
         return cls(*arr.tolist())
 
     @classmethod
     def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-        lower = np.array([-np.inf, 0.001, -np.inf, 0.001])
+        lower = np.array([-np.inf, 0.000, -np.inf, 0.001])
         upper = np.array([np.inf, np.inf, np.inf, np.inf])
         return lower, upper
 
