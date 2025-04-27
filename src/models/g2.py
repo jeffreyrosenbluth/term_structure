@@ -12,6 +12,8 @@ G2P = TypeVar("G2P", bound="G2Params")
 class G2Params(Parameters):
     def __init__(
         self,
+        x0: float,
+        y0: float,
         a: float,
         b: float,
         rho: float,
@@ -19,6 +21,8 @@ class G2Params(Parameters):
         sigma_x: float,
         sigma_y: float,
     ) -> None:
+        self.x0 = x0
+        self.y0 = y0
         self.a = a
         self.b = b
         self.rho = rho
@@ -28,7 +32,7 @@ class G2Params(Parameters):
 
     def to_array(self) -> NDArray[np.float64]:
         return np.array(
-            [self.a, self.b, self.rho, self.phi, self.sigma_x, self.sigma_y],
+            [self.x0, self.y0, self.a, self.b, self.rho, self.phi, self.sigma_x, self.sigma_y],
             dtype=np.float64,
         )
 
@@ -38,8 +42,8 @@ class G2Params(Parameters):
 
     @classmethod
     def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-        lower = np.array([-np.inf, -np.inf, -1.0, -np.inf, 0.0001, 0.0001])
-        upper = np.array([np.inf, np.inf, 1.0, np.inf, 1.0, 1.0])
+        lower = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -1.0, -np.inf, 0.0001, 0.0001])
+        upper = np.array([np.inf, np.inf, np.inf, np.inf, 1.0, np.inf, np.inf, np.inf])
         return lower, upper
 
 
@@ -50,6 +54,8 @@ class G2(ShortRateModel[G2Params]):
     def __str__(self) -> str:
         return (
             f"--- G2 ---\n"
+            f"x0={self._params.x0}\n"
+            f"y0={self._params.y0}\n"
             f"a={self._params.a}\n"
             f"b={self._params.b}\n"
             f"rho={self._params.rho}\n"
