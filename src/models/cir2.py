@@ -48,8 +48,6 @@ class CIR2(Model):
             f"kappa2={self.kappa2}\n"
             f"theta2={self.theta2}\n"
             f"sigma_y={self.sigma_y}\n"
-            f"sigma_x_bounds={self._sigma_x_bounds}\n"
-            f"sigma_y_bounds={self._sigma_y_bounds}\n"
         )
 
     def to_array(self) -> NDArray[np.float64]:
@@ -69,11 +67,20 @@ class CIR2(Model):
 
     @classmethod
     def from_array(cls, arr: NDArray[np.float64]) -> "CIR2":  # type: ignore
-        return cls(*arr.tolist())
+        return cls(
+            r0_1=arr[0],
+            r0_2=arr[1],
+            kappa1=arr[2],
+            theta1=arr[3],
+            sigma_x=arr[4],
+            kappa2=arr[5],
+            theta2=arr[6],
+            sigma_y=arr[7],
+        )
 
     @classmethod
     def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-        lower = np.array([0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.001, 0.001])
+        lower = np.array([-np.inf, -np.inf, -np.inf, -np.inf, 0.001, -np.inf, -np.inf, 0.001])
         upper = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
         return lower, upper
 
@@ -90,7 +97,7 @@ class CIR2(Model):
 
         return lower, upper
 
-    def params(self) -> "Model":
+    def params(self) -> "CIR2":
         return self
 
     def update_params(self, p: "Model") -> None:
@@ -103,5 +110,3 @@ class CIR2(Model):
         self.kappa2 = p.kappa2
         self.theta2 = p.theta2
         self.sigma_y = p.sigma_y
-        self._sigma_x_bounds = p._sigma_x_bounds
-        self._sigma_y_bounds = p._sigma_y_bounds

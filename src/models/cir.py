@@ -67,4 +67,3 @@ class CIR(Model):
         self.kappa = p.kappa
         self.theta = p.theta
         self.sigma = p.sigma
-        self._sigma_bounds = p._sigma_bounds

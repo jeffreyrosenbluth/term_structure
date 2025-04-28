@@ -92,5 +92,3 @@ class G2(Model):
         self.phi = p.phi
         self.sigma_x = p.sigma_x
         self.sigma_y = p.sigma_y
-        self._sigma_x_bounds = p._sigma_x_bounds
-        self._sigma_y_bounds = p._sigma_y_bounds

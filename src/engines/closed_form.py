@@ -60,15 +60,16 @@ class ClosedFormCIR(PricingEngine[CIR]):
 class ClosedFormG2(PricingEngine[G2]):
     def P(self, model: G2, T: float) -> float:
         p = model.params()
-        x0, y0, a, b, sigma_x, sigma_y, rho, phi = (
+        assert isinstance(p, G2)
+        x0, y0, a, b, rho, phi, sigma_x, sigma_y = (
             p.x0,
             p.y0,
             p.a,
             p.b,
-            p.sigma_x,
-            p.sigma_y,
             p.rho,
             p.phi,
+            p.sigma_x,
+            p.sigma_y,
         )
         term1 = (sigma_x**2 / a**2) * (
             T + (2 / a) * np.exp(-a * T) - (1 / (2 * a)) * np.exp(-2 * a * T) - (3 / (2 * a))
@@ -96,14 +97,12 @@ class ClosedFormG2(PricingEngine[G2]):
 
 class ClosedFormCIR2(PricingEngine[CIR2]):
     def P(self, model: CIR2, T: float) -> float:
-        def _cir_AB(
-            kappa: float, theta: float, sigma: float, t: NDArray[np.float64]
-        ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+        def _cir_AB(kappa: float, theta: float, sigma: float, t: float) -> Tuple[float, float]:
             gamma = math.sqrt(kappa * kappa + 2.0 * sigma * sigma)
-            exp_gt = np.exp(gamma * t)
+            exp_gt = math.exp(gamma * t)
             denom = (gamma + kappa) * (exp_gt - 1.0) + 2.0 * gamma
             B = 2.0 * (exp_gt - 1.0) / denom
-            A = (2.0 * gamma * np.exp((gamma + kappa) * t / 2.0) / denom) ** (
+            A = (2.0 * gamma * math.exp((gamma + kappa) * t / 2.0) / denom) ** (
                 2.0 * kappa * theta / (sigma * sigma)
             )
             return A, B
@@ -113,7 +112,14 @@ class ClosedFormCIR2(PricingEngine[CIR2]):
         A1, B1 = _cir_AB(p.kappa1, p.theta1, p.sigma_x, T)
         A2, B2 = _cir_AB(p.kappa2, p.theta2, p.sigma_y, T)
 
-        return float(A1 * A2 * np.exp(-B1 * p.r0_1 - B2 * p.r0_2))
+        # Add numerical safeguards to prevent overflow
+        exp_term = -B1 * p.r0_1 - B2 * p.r0_2
+        if exp_term > 700:
+            exp_term = 700
+        elif exp_term < -700:
+            exp_term = -700
+
+        return float(A1 * A2 * math.exp(exp_term))
 
 
 class ClosedFormGV2P(PricingEngine[GV2P]):
