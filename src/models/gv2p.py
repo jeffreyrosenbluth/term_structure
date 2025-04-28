@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import Model, P
+from src.core.model import Model
 
 
 class GV2P(Model):
@@ -109,7 +109,7 @@ class GV2P(Model):
     def params(self) -> "GV2P":
         return self
 
-    def update_params(self: "GV2P", p: "GV2P") -> None:
+    def update_params(self, p: "Model") -> None:
         assert isinstance(p, GV2P)
         self.x0 = p.x0
         self.y0 = p.y0

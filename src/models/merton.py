@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import Model, P
+from src.core.model import Model
 
 
 class Merton(Model):
@@ -43,10 +43,10 @@ class Merton(Model):
 
         return lower, upper
 
-    def params(self) -> "Merton":
+    def params(self) -> "Model":
         return self
 
-    def update_params(self: "Merton", p: "Merton") -> None:
+    def update_params(self, p: "Model") -> None:
         assert isinstance(p, Merton)
         self.r0 = p.r0
         self.mu = p.mu

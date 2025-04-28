@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import Model, P
+from src.core.model import Model
 
 
 class CIR(Model):
@@ -45,7 +45,7 @@ class CIR(Model):
 
     @classmethod
     def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-        lower = np.array([-np.inf, -np.inf, -np.inf, 0.001])
+        lower = np.array([0.000, 0.000, 0.000, 0.001])
         upper = np.array([np.inf, np.inf, np.inf, np.inf])
         return lower, upper
 
@@ -58,10 +58,10 @@ class CIR(Model):
 
         return lower, upper
 
-    def params(self) -> "CIR":
+    def params(self) -> "Model":
         return self
 
-    def update_params(self: "CIR", p: "CIR") -> None:
+    def update_params(self, p: "Model") -> None:
         assert isinstance(p, CIR)
         self.r0 = p.r0
         self.kappa = p.kappa

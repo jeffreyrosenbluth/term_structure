@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import Model, P
+from src.core.model import Model
 
 
 class CIR2(Model):
@@ -28,9 +28,6 @@ class CIR2(Model):
         self.kappa2 = kappa2
         self.theta2 = theta2
         self.sigma_y = sigma_y
-        self.sigma_x_center = sigma_x_center
-        self.sigma_y_center = sigma_y_center
-
         self._sigma_x_bounds: Optional[Tuple[float, float]] = None
         self._sigma_y_bounds: Optional[Tuple[float, float]] = None
 
@@ -51,11 +48,10 @@ class CIR2(Model):
             f"kappa2={self.kappa2}\n"
             f"theta2={self.theta2}\n"
             f"sigma_y={self.sigma_y}\n"
-            f"sigma_x_center={self.sigma_x_center}\n"
-            f"sigma_y_center={self.sigma_y_center}\n"
+            f"sigma_x_bounds={self._sigma_x_bounds}\n"
+            f"sigma_y_bounds={self._sigma_y_bounds}\n"
         )
 
-    # numerical helpers for calibrator / optimizer
     def to_array(self) -> NDArray[np.float64]:
         return np.array(
             [
@@ -72,38 +68,32 @@ class CIR2(Model):
         )
 
     @classmethod
-    def from_array(cls, a: NDArray[np.float64]) -> "CIR2":
-        return cls(*a.tolist())
+    def from_array(cls, arr: NDArray[np.float64]) -> "CIR2":  # type: ignore
+        return cls(*arr.tolist())
 
     @classmethod
     def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-        lo = np.array(
-            [-np.inf, -np.inf, 0.0, 0.0, 0.001, 0.0, 0.0, 0.001],
-            dtype=np.float64,
-        )
-        hi = np.array(
-            [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf],
-            dtype=np.float64,
-        )
-        return lo, hi
+        lower = np.array([0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.001, 0.001])
+        upper = np.array([np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
+        return lower, upper
 
     def get_bounds(self) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
         lower, upper = self.bounds()
 
-        if self.sigma_x_center is not None:
-            lower[4] = self.sigma_x_center * 0.95
-            upper[4] = self.sigma_x_center * 1.05
+        if self._sigma_x_bounds is not None:
+            lower[4] = self._sigma_x_bounds[0]
+            upper[4] = self._sigma_x_bounds[1]
 
-        if self.sigma_y_center is not None:
-            lower[7] = self.sigma_y_center * 0.95
-            upper[7] = self.sigma_y_center * 1.05
+        if self._sigma_y_bounds is not None:
+            lower[7] = self._sigma_y_bounds[0]
+            upper[7] = self._sigma_y_bounds[1]
 
         return lower, upper
 
-    def params(self) -> "CIR2":
+    def params(self) -> "Model":
         return self
 
-    def update_params(self: "CIR2", p: "CIR2") -> None:
+    def update_params(self, p: "Model") -> None:
         assert isinstance(p, CIR2)
         self.r0_1 = p.r0_1
         self.r0_2 = p.r0_2
@@ -113,5 +103,5 @@ class CIR2(Model):
         self.kappa2 = p.kappa2
         self.theta2 = p.theta2
         self.sigma_y = p.sigma_y
-        self.sigma_x_center = p.sigma_x_center
-        self.sigma_y_center = p.sigma_y_center
+        self._sigma_x_bounds = p._sigma_x_bounds
+        self._sigma_y_bounds = p._sigma_y_bounds

@@ -16,6 +16,7 @@ from src.models.vasicek import Vasicek
 class ClosedFormMerton(PricingEngine[Merton]):
     def P(self, model: Merton, T: float) -> float:
         p = model.params()
+        assert isinstance(p, Merton)
         r0, mu, sigma = p.r0, p.mu, p.sigma
         return float(np.exp(-r0 * T - 0.5 * mu * T**2 + sigma**2 * T**3 / 6.0))
 
@@ -23,6 +24,7 @@ class ClosedFormMerton(PricingEngine[Merton]):
 class ClosedFormVasicek(PricingEngine[Vasicek]):
     def P(self, model: Vasicek, T: float) -> float:
         p = model.params()
+        assert isinstance(p, Vasicek)
         r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
         B = (1 - math.exp(-kappa * T)) / kappa
         A = math.exp((theta - sigma**2 / (2 * kappa**2)) * (B - T) - sigma**2 * B**2 / (4 * kappa))
@@ -32,6 +34,7 @@ class ClosedFormVasicek(PricingEngine[Vasicek]):
 class ClosedFormCIR(PricingEngine[CIR]):
     def P(self, model: CIR, T: float) -> float:
         p = model.params()
+        assert isinstance(p, CIR)
         r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
 
         h = np.sqrt(kappa**2 + 2 * sigma**2)
@@ -106,6 +109,7 @@ class ClosedFormCIR2(PricingEngine[CIR2]):
             return A, B
 
         p = model.params()
+        assert isinstance(p, CIR2)
         A1, B1 = _cir_AB(p.kappa1, p.theta1, p.sigma_x, T)
         A2, B2 = _cir_AB(p.kappa2, p.theta2, p.sigma_y, T)
 
@@ -139,4 +143,11 @@ class ClosedFormGV2P(PricingEngine[GV2P]):
         A3 = -(sigma_x**2) * (T**3 / 6)
         A4 = -(sigma_y**2) * (T / (2 * gamma**2) - (1 - np.exp(-gamma * T)) / (gamma**3))
         A = A1 + A2 + A3 + A4
+
+        # Add numerical safeguards to prevent overflow
+        if A > 700:  # np.exp(700) is approximately 1e304, close to float64 max
+            A = 700
+        elif A < -700:  # np.exp(-700) is approximately 1e-304, close to float64 min
+            A = -700
+
         return float(np.exp(A - B * z0 - C * x0 - D * y0))

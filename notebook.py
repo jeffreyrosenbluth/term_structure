@@ -238,7 +238,8 @@ def _(
 
     optimizer = SciPyLeastSquares()
 
-    merton_model = Merton(r0=0.04, mu=0.0, sigma=0.01)
+    merton_model = Merton(r0=0.04, mu=0.002, sigma=0.01)
+
     merton_engine = ClosedFormMerton()
     merton_calib = Calibrator(merton_model, merton_engine, optimizer)
     merton_calib.calibrate(market_data)

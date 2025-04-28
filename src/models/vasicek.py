@@ -55,11 +55,12 @@ class Vasicek(Model):
 
         return lower, upper
 
-    def params(self) -> "Vasicek":
+    def params(self) -> "Model":
         return self
 
-    def update_params(self: "Vasicek", p: "Vasicek") -> None:
+    def update_params(self, p: "Model") -> None:
         """Update model parameters."""
+        assert isinstance(p, Vasicek)
         self.r0 = p.r0
         self.kappa = p.kappa
         self.theta = p.theta

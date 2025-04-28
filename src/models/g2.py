@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import Model, P
+from src.core.model import Model
 
 
 class G2(Model):
@@ -82,7 +82,7 @@ class G2(Model):
     def params(self) -> "G2":
         return self
 
-    def update_params(self: "G2", p: "G2") -> None:
+    def update_params(self, p: "Model") -> None:
         assert isinstance(p, G2)
         self.x0 = p.x0
         self.y0 = p.y0
