@@ -5,24 +5,23 @@ import numpy as np
 from numpy.typing import NDArray
 
 from src.core.engine import PricingEngine
-from src.core.model import ShortRateModel
-from src.models.cir import CIRParams
-from src.models.cir2 import CIR2Params
-from src.models.g2 import G2Params
-from src.models.gv2p import GV2PParams
-from src.models.merton import MertonParams
-from src.models.vasicek import VasicekParams
+from src.models.cir import CIR
+from src.models.cir2 import CIR2
+from src.models.g2 import G2
+from src.models.gv2p import GV2P
+from src.models.merton import Merton
+from src.models.vasicek import Vasicek
 
 
-class ClosedFormMerton(PricingEngine[MertonParams]):
-    def P(self, model: ShortRateModel[MertonParams], T: float) -> float:
+class ClosedFormMerton(PricingEngine[Merton]):
+    def P(self, model: Merton, T: float) -> float:
         p = model.params()
         r0, mu, sigma = p.r0, p.mu, p.sigma
         return float(np.exp(-r0 * T - 0.5 * mu * T**2 + sigma**2 * T**3 / 6.0))
 
 
-class ClosedFormVasicek(PricingEngine[VasicekParams]):
-    def P(self, model: ShortRateModel[VasicekParams], T: float) -> float:
+class ClosedFormVasicek(PricingEngine[Vasicek]):
+    def P(self, model: Vasicek, T: float) -> float:
         p = model.params()
         r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
         B = (1 - math.exp(-kappa * T)) / kappa
@@ -30,8 +29,8 @@ class ClosedFormVasicek(PricingEngine[VasicekParams]):
         return A * math.exp(-B * r0)
 
 
-class ClosedFormCIR(PricingEngine[CIRParams]):
-    def P(self, model: ShortRateModel[CIRParams], T: float) -> float:
+class ClosedFormCIR(PricingEngine[CIR]):
+    def P(self, model: CIR, T: float) -> float:
         p = model.params()
         r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
 
@@ -55,8 +54,8 @@ class ClosedFormCIR(PricingEngine[CIRParams]):
         return float(A_T * exp_term_P)
 
 
-class ClosedFormG2(PricingEngine[G2Params]):
-    def P(self, model: ShortRateModel[G2Params], T: float) -> float:
+class ClosedFormG2(PricingEngine[G2]):
+    def P(self, model: G2, T: float) -> float:
         p = model.params()
         x0, y0, a, b, sigma_x, sigma_y, rho, phi = (
             p.x0,
@@ -92,8 +91,8 @@ class ClosedFormG2(PricingEngine[G2Params]):
         return float(np.exp(A))
 
 
-class ClosedFormCIR2(PricingEngine[CIR2Params]):
-    def P(self, model: ShortRateModel[CIR2Params], T: float) -> float:
+class ClosedFormCIR2(PricingEngine[CIR2]):
+    def P(self, model: CIR2, T: float) -> float:
         def _cir_AB(
             kappa: float, theta: float, sigma: float, t: NDArray[np.float64]
         ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
@@ -106,15 +105,15 @@ class ClosedFormCIR2(PricingEngine[CIR2Params]):
             )
             return A, B
 
-        p: CIR2Params = model.params()
+        p = model.params()
         A1, B1 = _cir_AB(p.kappa1, p.theta1, p.sigma_x, T)
         A2, B2 = _cir_AB(p.kappa2, p.theta2, p.sigma_y, T)
 
         return float(A1 * A2 * np.exp(-B1 * p.r0_1 - B2 * p.r0_2))
 
 
-class ClosedFormGV2P(PricingEngine[GV2PParams]):
-    def P(self, model: ShortRateModel[GV2PParams], T: float) -> float:
+class ClosedFormGV2P(PricingEngine[GV2P]):
+    def P(self, model: GV2P, T: float) -> float:
         p = model.params()
         x0, y0, z0, lambda_, gamma, sigma_x, sigma_y, k, phi = (
             p.x0,

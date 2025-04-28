@@ -4,16 +4,15 @@ import numpy as np
 from numpy.typing import NDArray
 
 from src.core.engine import PricingEngine
-from src.core.model import ShortRateModel
-from src.core.parameter import Parameters
+from src.core.model import Model
 
-P = TypeVar("P", bound=Parameters)
+P = TypeVar("P", bound=Model)
 
 
 class Calibrator(Generic[P]):
     def __init__(
         self,
-        model: ShortRateModel[P],
+        model: P,
         engine: PricingEngine[P],
         solver: Any,
     ) -> None:

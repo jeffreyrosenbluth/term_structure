@@ -2,17 +2,18 @@ import numpy as np
 
 from src.core.binomial import BinomialTree
 from src.core.engine import PricingEngine
-from src.core.model import ShortRateModel
-from src.models.merton import MertonParams
-from src.models.vasicek import VasicekParams
+from src.core.model import Model
+from src.models.merton import Merton
+from src.models.vasicek import Vasicek
 
 
-class BinomialVasicek(PricingEngine[VasicekParams]):
+class BinomialVasicek(PricingEngine[Vasicek]):
     def __init__(self, maxT: float, dt: float) -> None:
         self.maxT = maxT
         self.dt = dt
 
-    def P(self, model: ShortRateModel[VasicekParams], T: float) -> float:
+    def P(self, model: Model, T: float) -> float:
+        assert isinstance(model, Vasicek)
         p = model.params()
         r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
 
@@ -36,12 +37,13 @@ class BinomialVasicek(PricingEngine[VasicekParams]):
         return self.bTree.price(T)
 
 
-class BinomialMerton(PricingEngine[MertonParams]):
+class BinomialMerton(PricingEngine[Merton]):
     def __init__(self, maxT: float, dt: float) -> None:
         self.maxT = maxT
         self.dt = dt
 
-    def P(self, model: ShortRateModel[MertonParams], T: float) -> float:
+    def P(self, model: Model, T: float) -> float:
+        assert isinstance(model, Merton)
         p = model.params()
         r0, mu, sigma = p.r0, p.mu, p.sigma
         periods = 1 + int(self.maxT / self.dt)

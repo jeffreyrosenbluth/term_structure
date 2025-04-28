@@ -152,19 +152,17 @@ def _():
     from src.engines.closed_form import ClosedFormCIR, ClosedFormG2, ClosedFormVasicek, ClosedFormCIR2, ClosedFormMerton, ClosedFormGV2P
     from src.engines.binomial_tree import BinomialVasicek, BinomialMerton
     from src.engines.monte_carlo import MonteCarloMerton, MonteCarloVasicek
-    from src.models.cir import CIR, CIRParams
-    from src.models.g2 import G2, G2Params
-    from src.models.vasicek import Vasicek, VasicekParams
-    from src.models.cir2 import CIR2, CIR2Params
-    from src.models.merton import Merton, MertonParams
-    from src.models.gv2p import GV2P, GV2PParams
+    from src.models.cir import CIR, CIR
+    from src.models.g2 import G2, G2
+    from src.models.vasicek import Vasicek
+    from src.models.cir2 import CIR2
+    from src.models.merton import Merton
+    from src.models.gv2p import GV2P
     from src.optim.least_squares import SciPyLeastSquares
 
     return (
         CIR,
         CIR2,
-        CIR2Params,
-        CIRParams,
         Calibrator,
         ClosedFormCIR,
         ClosedFormCIR2,
@@ -173,14 +171,10 @@ def _():
         ClosedFormMerton,
         ClosedFormVasicek,
         G2,
-        G2Params,
         GV2P,
-        GV2PParams,
         Merton,
-        MertonParams,
         SciPyLeastSquares,
         Vasicek,
-        VasicekParams,
     )
 
 
@@ -225,8 +219,6 @@ def _(plt):
 def _(
     CIR,
     CIR2,
-    CIR2Params,
-    CIRParams,
     Calibrator,
     ClosedFormCIR,
     ClosedFormCIR2,
@@ -235,14 +227,10 @@ def _(
     ClosedFormMerton,
     ClosedFormVasicek,
     G2,
-    G2Params,
     GV2P,
-    GV2PParams,
     Merton,
-    MertonParams,
     SciPyLeastSquares,
     Vasicek,
-    VasicekParams,
 ):
     # market_data = [(0.25, 0.04), (2.0, 0.041), (10.0, 0.045), (30.0, 0.05)]
     # market_data = [(1.0, 0.0175), (5.0, 0.0155), (10.0, 0.0168), (30.0, 0.0212)]
@@ -250,39 +238,33 @@ def _(
 
     optimizer = SciPyLeastSquares()
 
-    merton_params0 = MertonParams(r0=0.04, mu=0.0, sigma=0.01)
-    merton_model = Merton(merton_params0)
+    merton_model = Merton(r0=0.04, mu=0.0, sigma=0.01)
     merton_engine = ClosedFormMerton()
     merton_calib = Calibrator(merton_model, merton_engine, optimizer)
     merton_calib.calibrate(market_data)
 
-    g2_params0 = G2Params(x0=0.0, y0=0.0, a=0.02, b=0.01, rho=-0.5, phi=0.03, sigma_x=0.05, sigma_y=0.01)
-    g2_model = G2(g2_params0)
+    g2_model = G2(x0=0.0, y0=0.0, a=0.02, b=0.01, rho=-0.5, phi=0.03, sigma_x=0.05, sigma_y=0.01)
     g2_engine = ClosedFormG2()
     g2_calib = Calibrator(g2_model, g2_engine, optimizer)
     g2_calib.calibrate(market_data)
 
-    cir_params0 = CIRParams(r0=0.0, kappa=0.0, theta=0.00, sigma=0.01)
-    cir_model = CIR(cir_params0)
+    cir_model = CIR(r0=0.0, kappa=0.0, theta=0.00, sigma=0.01)
     cir_engine = ClosedFormCIR()
     cir_calib = Calibrator(cir_model, cir_engine, optimizer)
     cir_calib.calibrate(market_data)
 
-    vas_params0 = VasicekParams(r0=0.04, kappa=0.01, theta=0.1, sigma=0.01)
-    vas_model = Vasicek(vas_params0)
+    vas_model = Vasicek(r0=0.04, kappa=0.01, theta=0.1, sigma=0.01)
     vas_engine = ClosedFormVasicek()
     vas_calib = Calibrator(vas_model, vas_engine, optimizer)
     vas_calib.calibrate(market_data)
 
-    cir2_params0 = CIR2Params(r0_1=0.01, r0_2=0.01, kappa1=0.02, kappa2=0.01, theta1=0.1, 
+    cir2_model = CIR2(r0_1=0.01, r0_2=0.01, kappa1=0.02, kappa2=0.01, theta1=0.1, 
                               theta2=0.2, sigma_x=0.05, sigma_y=0.05)
-    cir2_model = CIR2(cir2_params0)
     cir2_engine = ClosedFormCIR2()
     cir2_calib = Calibrator(cir2_model, cir2_engine, optimizer)
     cir2_calib.calibrate(market_data)
 
-    gv2p_params0 = GV2PParams(x0=0.0, y0=0.0, z0=0.0, gamma=0.5, k=0.2,lambda_=0.01,phi=0.005, sigma_x=0.005, sigma_y=0.03)
-    gv2p_model = GV2P(gv2p_params0)
+    gv2p_model = GV2P(x0=0.0, y0=0.0, z0=0.0, gamma=0.5, k=0.2,lambda_=0.01,phi=0.005, sigma_x=0.005, sigma_y=0.03)
     gv2p_engine = ClosedFormGV2P()
     gv2p_calib = Calibrator(gv2p_model, gv2p_engine, optimizer)
     gv2p_calib.calibrate(market_data)
@@ -301,6 +283,12 @@ def _(
         vas_engine,
         vas_model,
     )
+
+
+@app.cell
+def _(vas_model):
+    print(vas_model)
+    return
 
 
 @app.cell

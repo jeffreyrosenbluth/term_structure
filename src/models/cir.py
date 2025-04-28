@@ -1,15 +1,12 @@
-from typing import Optional, Tuple, TypeVar
+from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import ShortRateModel
-from src.core.parameter import Parameters
-
-CP = TypeVar("CP", bound="CIRParams")
+from src.core.model import Model, P
 
 
-class CIRParams(Parameters):
+class CIR(Model):
     # Fixed parameter
     sigma: float = 0.01
 
@@ -30,11 +27,20 @@ class CIRParams(Parameters):
         if sigma_center is not None:
             self._sigma_bounds = (sigma_center * 0.95, sigma_center * 1.05)
 
+    def __str__(self) -> str:
+        return (
+            f"--- CIR ---\n"
+            f"r0={self.r0}\n"
+            f"kappa={self.kappa}\n"
+            f"theta={self.theta}\n"
+            f"sigma={self.sigma}\n"
+        )
+
     def to_array(self) -> NDArray[np.float64]:
         return np.array([self.r0, self.kappa, self.theta, self.sigma], dtype=np.float64)
 
     @classmethod
-    def from_array(cls, arr: NDArray[np.float64]) -> "CIRParams":  # type: ignore
+    def from_array(cls, arr: NDArray[np.float64]) -> "CIR":  # type: ignore
         return cls(*arr.tolist())
 
     @classmethod
@@ -52,22 +58,13 @@ class CIRParams(Parameters):
 
         return lower, upper
 
+    def params(self) -> "CIR":
+        return self
 
-class CIR(ShortRateModel[CIRParams]):
-    def __init__(self, params: CIRParams) -> None:
-        self._params = params
-
-    def __str__(self) -> str:
-        return (
-            f"--- CIR ---\n"
-            f"r0={self._params.r0}\n"
-            f"kappa={self._params.kappa}\n"
-            f"theta={self._params.theta}\n"
-            f"sigma={self._params.sigma}\n"
-        )
-
-    def params(self) -> CIRParams:
-        return self._params
-
-    def update_params(self, p: CIRParams) -> None:
-        self._params = p
+    def update_params(self, p: P) -> None:
+        assert isinstance(p, CIR)
+        self.r0 = p.r0
+        self.kappa = p.kappa
+        self.theta = p.theta
+        self.sigma = p.sigma
+        self._sigma_bounds = p._sigma_bounds

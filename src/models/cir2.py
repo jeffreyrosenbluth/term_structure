@@ -1,15 +1,12 @@
-from typing import Optional, Tuple, TypeVar
+from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import ShortRateModel
-from src.core.parameter import Parameters
-
-ParamT = TypeVar("ParamT", bound=Parameters)
+from src.core.model import Model, P
 
 
-class CIR2Params(Parameters):
+class CIR2(Model):
     def __init__(
         self,
         r0_1: float,
@@ -43,6 +40,21 @@ class CIR2Params(Parameters):
         if sigma_y_center is not None:
             self._sigma_y_bounds = (sigma_y_center * 0.95, sigma_y_center * 1.05)
 
+    def __str__(self) -> str:
+        return (
+            f"--- CIR2 ---\n"
+            f"r0_1={self.r0_1}\n"
+            f"r0_2={self.r0_2}\n"
+            f"kappa1={self.kappa1}\n"
+            f"theta1={self.theta1}\n"
+            f"sigma_x={self.sigma_x}\n"
+            f"kappa2={self.kappa2}\n"
+            f"theta2={self.theta2}\n"
+            f"sigma_y={self.sigma_y}\n"
+            f"sigma_x_center={self.sigma_x_center}\n"
+            f"sigma_y_center={self.sigma_y_center}\n"
+        )
+
     # numerical helpers for calibrator / optimizer
     def to_array(self) -> NDArray[np.float64]:
         return np.array(
@@ -60,7 +72,7 @@ class CIR2Params(Parameters):
         )
 
     @classmethod
-    def from_array(cls, a: NDArray[np.float64]) -> "CIR2Params":
+    def from_array(cls, a: NDArray[np.float64]) -> "CIR2":
         return cls(*a.tolist())
 
     @classmethod
@@ -88,26 +100,18 @@ class CIR2Params(Parameters):
 
         return lower, upper
 
+    def params(self) -> "CIR2":
+        return self
 
-class CIR2(ShortRateModel[CIR2Params]):
-    def __init__(self, params: CIR2Params) -> None:
-        self._params = params
-
-    def __str__(self) -> str:
-        return (
-            f"--- CIR2 ---\n"
-            f"r0_1={self._params.r0_1}\n"
-            f"r0_2={self._params.r0_2}\n"
-            f"kappa1={self._params.kappa1}\n"
-            f"theta1={self._params.theta1}\n"
-            f"sigma_x={self._params.sigma_x}\n"
-            f"kappa2={self._params.kappa2}\n"
-            f"theta2={self._params.theta2}\n"
-            f"sigma_y={self._params.sigma_y}\n"
-        )
-
-    def params(self) -> CIR2Params:
-        return self._params
-
-    def update_params(self, p: CIR2Params) -> None:
-        self._params = p
+    def update_params(self, p: P) -> None:
+        assert isinstance(p, CIR2)
+        self.r0_1 = p.r0_1
+        self.r0_2 = p.r0_2
+        self.kappa1 = p.kappa1
+        self.theta1 = p.theta1
+        self.sigma_x = p.sigma_x
+        self.kappa2 = p.kappa2
+        self.theta2 = p.theta2
+        self.sigma_y = p.sigma_y
+        self.sigma_x_center = p.sigma_x_center
+        self.sigma_y_center = p.sigma_y_center

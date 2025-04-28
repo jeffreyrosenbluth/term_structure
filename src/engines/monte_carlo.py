@@ -3,12 +3,12 @@ import math
 import numpy as np
 
 from src.core.engine import PricingEngine
-from src.core.model import ShortRateModel
-from src.models.merton import MertonParams
-from src.models.vasicek import VasicekParams
+from src.core.model import Model
+from src.models.merton import Merton
+from src.models.vasicek import Vasicek
 
 
-class MonteCarloMerton(PricingEngine[MertonParams]):
+class MonteCarloMerton(PricingEngine[Merton]):
     def __init__(self, maxT: float, dt: float, num_paths: int = 10_000) -> None:
         self.maxT = maxT
         self.dt = dt
@@ -21,7 +21,8 @@ class MonteCarloMerton(PricingEngine[MertonParams]):
         self._cumsum_dW = np.cumsum(self._dW, axis=1)
         self._time_steps = np.arange(1, num_steps + 1) * self.dt
 
-    def P(self, model: ShortRateModel[MertonParams], T: float) -> float:
+    def P(self, model: Model, T: float) -> float:
+        assert isinstance(model, Merton)
         p = model.params()
         r0, mu, sigma = p.r0, p.mu, p.sigma
         steps = int(T / self.dt)
@@ -36,7 +37,7 @@ class MonteCarloMerton(PricingEngine[MertonParams]):
         return float(np.mean(discount_factors))
 
 
-class MonteCarloVasicek(PricingEngine[VasicekParams]):
+class MonteCarloVasicek(PricingEngine[Vasicek]):
     def __init__(self, maxT: float, dt: float, num_paths: int = 10_000) -> None:
         self.maxT = maxT
         self.dt = dt
@@ -48,7 +49,8 @@ class MonteCarloVasicek(PricingEngine[VasicekParams]):
         self._dW = np.random.randn(self.num_paths, num_steps)
         self._time_steps = np.arange(1, num_steps + 1) * self.dt
 
-    def P(self, model: ShortRateModel[VasicekParams], T: float) -> float:
+    def P(self, model: Model, T: float) -> float:
+        assert isinstance(model, Vasicek)
         p = model.params()
         r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
         steps = int(T / self.dt)

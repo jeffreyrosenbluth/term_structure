@@ -1,15 +1,12 @@
-from typing import Optional, Tuple, TypeVar
+from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import ShortRateModel
-from src.core.parameter import Parameters
-
-GV = TypeVar("GV", bound="GV2PParams")
+from src.core.model import Model, P
 
 
-class GV2PParams(Parameters):
+class GV2P(Model):
     def __init__(
         self,
         x0: float,
@@ -44,6 +41,20 @@ class GV2PParams(Parameters):
         if sigma_y_center is not None:
             self._sigma_y_bounds = (sigma_y_center * 0.95, sigma_y_center * 1.05)
 
+    def __str__(self) -> str:
+        return (
+            f"--- GV2P ---\n"
+            f"x0={self.x0}\n"
+            f"y0={self.y0}\n"
+            f"z0={self.z0}\n"
+            f"lambda_={self.lambda_}\n"
+            f"gamma={self.gamma}\n"
+            f"sigma_x={self.sigma_x}\n"
+            f"sigma_y={self.sigma_y}\n"
+            f"k={self.k}\n"
+            f"phi={self.phi}\n"
+        )
+
     def to_array(self) -> NDArray[np.float64]:
         return np.array(
             [
@@ -61,7 +72,7 @@ class GV2PParams(Parameters):
         )
 
     @classmethod
-    def from_array(cls, a: NDArray[np.float64]) -> "GV2PParams":
+    def from_array(cls, a: NDArray[np.float64]) -> "GV2P":
         return cls(*a.tolist())
 
     @classmethod
@@ -95,27 +106,19 @@ class GV2PParams(Parameters):
 
         return lower, upper
 
+    def params(self) -> "GV2P":
+        return self
 
-class GV2P(ShortRateModel[GV2PParams]):
-    def __init__(self, params: GV2PParams) -> None:
-        self._params = params
-
-    def __str__(self) -> str:
-        return (
-            f"--- GV2P ---\n"
-            f"x0={self._params.x0}\n"
-            f"y0={self._params.y0}\n"
-            f"z0={self._params.z0}\n"
-            f"lambda_={self._params.lambda_}\n"
-            f"gamma={self._params.gamma}\n"
-            f"sigma_x={self._params.sigma_x}\n"
-            f"sigma_y={self._params.sigma_y}\n"
-            f"k={self._params.k}\n"
-            f"phi={self._params.phi}\n"
-        )
-
-    def params(self) -> GV2PParams:
-        return self._params
-
-    def update_params(self, p: GV2PParams) -> None:
-        self._params = p
+    def update_params(self, p: P) -> None:
+        assert isinstance(p, GV2P)
+        self.x0 = p.x0
+        self.y0 = p.y0
+        self.z0 = p.z0
+        self.lambda_ = p.lambda_
+        self.gamma = p.gamma
+        self.sigma_x = p.sigma_x
+        self.sigma_y = p.sigma_y
+        self.k = p.k
+        self.phi = p.phi
+        self._sigma_x_bounds = p._sigma_x_bounds
+        self._sigma_y_bounds = p._sigma_y_bounds

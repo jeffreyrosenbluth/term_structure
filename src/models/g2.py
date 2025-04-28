@@ -1,15 +1,12 @@
-from typing import Optional, Tuple, TypeVar
+from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import ShortRateModel
-from src.core.parameter import Parameters
-
-G2P = TypeVar("G2P", bound="G2Params")
+from src.core.model import Model, P
 
 
-class G2Params(Parameters):
+class G2(Model):
     def __init__(
         self,
         x0: float,
@@ -40,6 +37,19 @@ class G2Params(Parameters):
         if sigma_y_center is not None:
             self._sigma_y_bounds = (sigma_y_center * 0.95, sigma_y_center * 1.05)
 
+    def __str__(self) -> str:
+        return (
+            f"--- G2 ---\n"
+            f"x0={self.x0}\n"
+            f"y0={self.y0}\n"
+            f"a={self.a}\n"
+            f"b={self.b}\n"
+            f"rho={self.rho}\n"
+            f"phi={self.phi}\n"
+            f"sigma_x={self.sigma_x}\n"
+            f"sigma_y={self.sigma_y}\n"
+        )
+
     def to_array(self) -> NDArray[np.float64]:
         return np.array(
             [self.x0, self.y0, self.a, self.b, self.rho, self.phi, self.sigma_x, self.sigma_y],
@@ -47,7 +57,7 @@ class G2Params(Parameters):
         )
 
     @classmethod
-    def from_array(cls, a: NDArray[np.float64]) -> "G2Params":  # type: ignore
+    def from_array(cls, a: NDArray[np.float64]) -> "G2":  # type: ignore
         return cls(*a.tolist())
 
     @classmethod
@@ -69,26 +79,18 @@ class G2Params(Parameters):
 
         return lower, upper
 
+    def params(self) -> "G2":
+        return self
 
-class G2(ShortRateModel[G2Params]):
-    def __init__(self, params: G2Params) -> None:
-        self._params = params
-
-    def __str__(self) -> str:
-        return (
-            f"--- G2 ---\n"
-            f"x0={self._params.x0}\n"
-            f"y0={self._params.y0}\n"
-            f"a={self._params.a}\n"
-            f"b={self._params.b}\n"
-            f"rho={self._params.rho}\n"
-            f"phi={self._params.phi}\n"
-            f"sigma_x={self._params.sigma_x}\n"
-            f"sigma_y={self._params.sigma_y}\n"
-        )
-
-    def params(self) -> G2Params:
-        return self._params
-
-    def update_params(self, p: G2Params) -> None:
-        self._params = p
+    def update_params(self, p: P) -> None:
+        assert isinstance(p, G2)
+        self.x0 = p.x0
+        self.y0 = p.y0
+        self.a = p.a
+        self.b = p.b
+        self.rho = p.rho
+        self.phi = p.phi
+        self.sigma_x = p.sigma_x
+        self.sigma_y = p.sigma_y
+        self._sigma_x_bounds = p._sigma_x_bounds
+        self._sigma_y_bounds = p._sigma_y_bounds

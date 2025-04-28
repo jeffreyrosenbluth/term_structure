@@ -1,16 +1,24 @@
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from __future__ import annotations  # enables typing.Self on 3.11+
 
-from src.core.parameter import Parameters
+from typing import Protocol, Tuple, TypeVar
 
-P = TypeVar("P", bound=Parameters)
+import numpy as np
+from numpy.typing import NDArray
+
+P = TypeVar("P", bound="Model")
 
 
-class ShortRateModel(ABC, Generic[P]):
-    """Base class for all short-rate models."""
+class Model(Protocol):
+    def to_array(self) -> NDArray[np.float64]: ...
 
-    @abstractmethod
-    def params(self) -> P: ...
+    @classmethod
+    def from_array(cls: type[P], a: NDArray[np.float64]) -> P: ...
 
-    @abstractmethod
+    @classmethod
+    def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]: ...
+
+    def get_bounds(self) -> Tuple[NDArray[np.float64], NDArray[np.float64]]: ...
+
+    def params(self: P) -> P: ...
+
     def update_params(self, p: P) -> None: ...

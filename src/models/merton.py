@@ -1,15 +1,12 @@
-from typing import Optional, Tuple, TypeVar
+from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import ShortRateModel
-from src.core.parameter import Parameters
-
-MP = TypeVar("MP", bound="MertonParams")
+from src.core.model import Model, P
 
 
-class MertonParams(Parameters):
+class Merton(Model):
     def __init__(
         self, r0: float, mu: float, sigma: float, sigma_center: Optional[float] = None
     ) -> None:
@@ -21,11 +18,14 @@ class MertonParams(Parameters):
         if sigma_center is not None:
             self._sigma_bounds = (sigma_center * 0.95, sigma_center * 1.05)
 
+    def __str__(self) -> str:
+        return f"--- Merton ---\nr0={self.r0}\nmu={self.mu}\nsigma={self.sigma}\n"
+
     def to_array(self) -> NDArray[np.float64]:
         return np.array([self.r0, self.mu, self.sigma], dtype=np.float64)
 
     @classmethod
-    def from_array(cls, arr: NDArray[np.float64]) -> "MertonParams":  # type: ignore
+    def from_array(cls, arr: NDArray[np.float64]) -> "Merton":  # type: ignore
         return cls(*arr.tolist())
 
     @classmethod
@@ -43,21 +43,11 @@ class MertonParams(Parameters):
 
         return lower, upper
 
+    def params(self) -> "Merton":
+        return self
 
-class Merton(ShortRateModel[MertonParams]):
-    def __init__(self, params: MertonParams) -> None:
-        self._params = params
-
-    def __str__(self) -> str:
-        return (
-            f"--- Merton ---\n"
-            f"r0={self._params.r0}\n"
-            f"mu={self._params.mu}\n"
-            f"sigma={self._params.sigma}\n"
-        )
-
-    def params(self) -> MertonParams:
-        return self._params
-
-    def update_params(self, p: MertonParams) -> None:
-        self._params = p
+    def update_params(self, p: P) -> None:
+        assert isinstance(p, Merton)
+        self.r0 = p.r0
+        self.mu = p.mu
+        self.sigma = p.sigma
