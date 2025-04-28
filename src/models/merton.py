@@ -1,4 +1,4 @@
-from typing import Tuple, TypeVar
+from typing import Optional, Tuple, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -10,10 +10,16 @@ MP = TypeVar("MP", bound="MertonParams")
 
 
 class MertonParams(Parameters):
-    def __init__(self, r0: float, mu: float, sigma: float) -> None:
+    def __init__(
+        self, r0: float, mu: float, sigma: float, sigma_center: Optional[float] = None
+    ) -> None:
         self.r0 = r0
         self.mu = mu
         self.sigma = sigma
+        self._sigma_bounds: Optional[Tuple[float, float]] = None
+
+        if sigma_center is not None:
+            self._sigma_bounds = (sigma_center * 0.95, sigma_center * 1.05)
 
     def to_array(self) -> NDArray[np.float64]:
         return np.array([self.r0, self.mu, self.sigma], dtype=np.float64)
@@ -26,6 +32,15 @@ class MertonParams(Parameters):
     def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
         lower = np.array([-np.inf, -np.inf, 0.001])
         upper = np.array([np.inf, np.inf, np.inf])
+        return lower, upper
+
+    def get_bounds(self) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+        lower, upper = self.bounds()
+
+        if self._sigma_bounds is not None:
+            lower[2] = self._sigma_bounds[0]
+            upper[2] = self._sigma_bounds[1]
+
         return lower, upper
 
 

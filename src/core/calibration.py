@@ -30,7 +30,7 @@ class Calibrator(Generic[P]):
             prices = np.array([self.engine.P(self.model, ti) for ti in t])
             return self.engine.spot_rate(prices, t) - y
 
-        lower, upper = self.model.params().bounds()
+        lower, upper = self.model.params().get_bounds()
 
         theta0 = self.model.params().to_array()
         theta_star = self.solver.minimize(

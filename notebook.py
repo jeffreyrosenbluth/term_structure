@@ -2,7 +2,7 @@
 
 import marimo
 
-__generated_with = "0.13.1"
+__generated_with = "0.13.2"
 app = marimo.App(width="medium")
 
 
@@ -96,6 +96,46 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## G2 Model""")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""## CIR2 Model""")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        ## GV2+ Model
+        A  Guassain variant of Salomon Brothers 2+ model
+
+        \begin{aligned}
+        dx_t &= \lambda dt + \sigma_x dW_x \\
+        dy_t &= -\gamma y_t dt + \sigma_y dW_y \\
+        dz_t &= -k(z_t - x_t - y_t) \\
+        r_t &= z_t + \phi\\
+        \end{aligned}
+
+        We calculate the price of a zero coupon bond, the volatility terms in $A(t,T)$ are approximations that for all practical purposes should be fine.
+
+        \begin{aligned}
+        P(t, T) &= \exp\big(A(t,T) - B(t,T)z_t -C(t,T)x_t -D(t,T)y_t\big)\\
+        A(t,T)&≈−ϕ(T−t)−λ\left[\frac{(T−t)^2}{2}−\frac{(T−t)}{k}+\frac{B(t,T)}{k}\right]−\frac{\sigma_x^2}{6}(T−t)^3−\frac{\sigma_y^2}{2 \gamma^2}\left[T−t−\frac{2}{\gamma}\left(1−e^{γ(T−t)}\right)\right]\\
+        B(t,T)&= \frac{1−e^{−k(T−t)}}{k} \\
+        C(t,T) &= (T-t) - B(t, T) \\
+        D(t,T) &= \frac{1-e^{-\gamma(T-t)}}{\gamma}-\frac{(1-e^{-\gamma(T-t)})}{\gamma(k-\gamma)}-\frac{B(t,T)}{k-\gamma} \\
+        \end{aligned}
+        """
+    )
+    return
+
+
 @app.cell
 def _():
     import marimo as mo
@@ -130,6 +170,7 @@ def _():
         ClosedFormCIR2,
         ClosedFormG2,
         ClosedFormGV2P,
+        ClosedFormMerton,
         ClosedFormVasicek,
         G2,
         G2Params,
@@ -137,7 +178,6 @@ def _():
         GV2PParams,
         Merton,
         MertonParams,
-        MonteCarloMerton,
         SciPyLeastSquares,
         Vasicek,
         VasicekParams,
@@ -171,9 +211,10 @@ def _(plt):
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.1f}%"))
         if factors == 1:
             ax.legend(["Merton", "Vasicek", "CIR"], edgecolor='none', borderpad=2)
+            ax.set_title( "One Factor Short Rate Models", fontsize=20, pad=15)
         elif factors == 2:
             ax.legend(["G2", "CIR2", "GV2P"], edgecolor='none', borderpad=2)
-        ax.set_title( "Short Rate Models", fontsize=20, pad=15)
+            ax.set_title( "Two Factor Short Rate Models", fontsize=20, pad=15)
         fig.tight_layout()
         plt.show()
 
@@ -191,6 +232,7 @@ def _(
     ClosedFormCIR2,
     ClosedFormG2,
     ClosedFormGV2P,
+    ClosedFormMerton,
     ClosedFormVasicek,
     G2,
     G2Params,
@@ -198,7 +240,6 @@ def _(
     GV2PParams,
     Merton,
     MertonParams,
-    MonteCarloMerton,
     SciPyLeastSquares,
     Vasicek,
     VasicekParams,
@@ -211,8 +252,7 @@ def _(
 
     merton_params0 = MertonParams(r0=0.04, mu=0.0, sigma=0.01)
     merton_model = Merton(merton_params0)
-    merton_engine = MonteCarloMerton(30, 0.25)
-    # # merton_engine = ClosedFormMerton()
+    merton_engine = ClosedFormMerton()
     merton_calib = Calibrator(merton_model, merton_engine, optimizer)
     merton_calib.calibrate(market_data)
 
@@ -231,26 +271,21 @@ def _(
     vas_params0 = VasicekParams(r0=0.04, kappa=0.01, theta=0.1, sigma=0.01)
     vas_model = Vasicek(vas_params0)
     vas_engine = ClosedFormVasicek()
-    # vas_engine = MonteCarloVasicek(30, 0.25)
     vas_calib = Calibrator(vas_model, vas_engine, optimizer)
     vas_calib.calibrate(market_data)
 
     cir2_params0 = CIR2Params(r0_1=0.01, r0_2=0.01, kappa1=0.02, kappa2=0.01, theta1=0.1, 
-                              theta2=0.2, sigma1=0.01, sigma2=0.01)
+                              theta2=0.2, sigma_x=0.05, sigma_y=0.05)
     cir2_model = CIR2(cir2_params0)
     cir2_engine = ClosedFormCIR2()
     cir2_calib = Calibrator(cir2_model, cir2_engine, optimizer)
     cir2_calib.calibrate(market_data)
 
-    gv2p_params0 = GV2PParams(x0=0.0, y0=0.0, z0=0.0, gamma=0.5, k=0.2,lambda_=0.01,phi=0.005, sigma_x=0.02, sigma_y=0.03)
+    gv2p_params0 = GV2PParams(x0=0.0, y0=0.0, z0=0.0, gamma=0.5, k=0.2,lambda_=0.01,phi=0.005, sigma_x=0.005, sigma_y=0.03)
     gv2p_model = GV2P(gv2p_params0)
     gv2p_engine = ClosedFormGV2P()
     gv2p_calib = Calibrator(gv2p_model, gv2p_engine, optimizer)
     gv2p_calib.calibrate(market_data)
-
-
-    # vasbin_engine = BinomialVasicek(maxT=31, dt=0.25)
-    # vasbin_calib = Calibrator(vas_model, vasbin_engine, optimizer)
     return (
         cir2_engine,
         cir2_model,
@@ -297,9 +332,6 @@ def _(
 
     vas_prices = [vas_engine.P(vas_model, t) for t in maturities]
     vas_yields = vas_engine.spot_rate(vas_prices, maturities)
-
-    # vasbin_prices = [vasbin_engine.P(vas_model, t) for t in maturities]
-    # vasbin_yields = vasbin_engine.spot_rate(vas_prices, maturities)
 
     cir2_prices = [cir2_engine.P(cir2_model, t) for t in maturities]
     cir2_yields = cir2_engine.spot_rate(cir2_prices, maturities)

@@ -107,8 +107,8 @@ class ClosedFormCIR2(PricingEngine[CIR2Params]):
             return A, B
 
         p: CIR2Params = model.params()
-        A1, B1 = _cir_AB(p.kappa1, p.theta1, p.sigma1, T)
-        A2, B2 = _cir_AB(p.kappa2, p.theta2, p.sigma2, T)
+        A1, B1 = _cir_AB(p.kappa1, p.theta1, p.sigma_x, T)
+        A2, B2 = _cir_AB(p.kappa2, p.theta2, p.sigma_y, T)
 
         return float(A1 * A2 * np.exp(-B1 * p.r0_1 - B2 * p.r0_2))
 

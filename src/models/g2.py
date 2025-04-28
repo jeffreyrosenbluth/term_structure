@@ -1,4 +1,4 @@
-from typing import Tuple, TypeVar
+from typing import Optional, Tuple, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -20,6 +20,8 @@ class G2Params(Parameters):
         phi: float,
         sigma_x: float,
         sigma_y: float,
+        sigma_x_center: Optional[float] = None,
+        sigma_y_center: Optional[float] = None,
     ) -> None:
         self.x0 = x0
         self.y0 = y0
@@ -29,6 +31,14 @@ class G2Params(Parameters):
         self.phi = phi
         self.sigma_x = sigma_x
         self.sigma_y = sigma_y
+        self._sigma_x_bounds: Optional[Tuple[float, float]] = None
+        self._sigma_y_bounds: Optional[Tuple[float, float]] = None
+
+        if sigma_x_center is not None:
+            self._sigma_x_bounds = (sigma_x_center * 0.95, sigma_x_center * 1.05)
+
+        if sigma_y_center is not None:
+            self._sigma_y_bounds = (sigma_y_center * 0.95, sigma_y_center * 1.05)
 
     def to_array(self) -> NDArray[np.float64]:
         return np.array(
@@ -44,6 +54,19 @@ class G2Params(Parameters):
     def bounds(cls) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
         lower = np.array([-np.inf, -np.inf, -np.inf, -np.inf, -1.0, -np.inf, 0.0001, 0.0001])
         upper = np.array([np.inf, np.inf, np.inf, np.inf, 1.0, np.inf, np.inf, np.inf])
+        return lower, upper
+
+    def get_bounds(self) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+        lower, upper = self.bounds()
+
+        if self._sigma_x_bounds is not None:
+            lower[6] = self._sigma_x_bounds[0]
+            upper[6] = self._sigma_x_bounds[1]
+
+        if self._sigma_y_bounds is not None:
+            lower[7] = self._sigma_y_bounds[0]
+            upper[7] = self._sigma_y_bounds[1]
+
         return lower, upper
 
 
