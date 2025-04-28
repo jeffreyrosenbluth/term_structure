@@ -46,7 +46,7 @@ class Merton(Model):
     def params(self) -> "Merton":
         return self
 
-    def update_params(self, p: P) -> None:
+    def update_params(self: "Merton", p: "Merton") -> None:
         assert isinstance(p, Merton)
         self.r0 = p.r0
         self.mu = p.mu

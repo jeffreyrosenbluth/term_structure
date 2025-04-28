@@ -103,7 +103,7 @@ class CIR2(Model):
     def params(self) -> "CIR2":
         return self
 
-    def update_params(self, p: P) -> None:
+    def update_params(self: "CIR2", p: "CIR2") -> None:
         assert isinstance(p, CIR2)
         self.r0_1 = p.r0_1
         self.r0_2 = p.r0_2

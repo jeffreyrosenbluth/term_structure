@@ -82,7 +82,7 @@ class G2(Model):
     def params(self) -> "G2":
         return self
 
-    def update_params(self, p: P) -> None:
+    def update_params(self: "G2", p: "G2") -> None:
         assert isinstance(p, G2)
         self.x0 = p.x0
         self.y0 = p.y0

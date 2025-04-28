@@ -61,7 +61,7 @@ class CIR(Model):
     def params(self) -> "CIR":
         return self
 
-    def update_params(self, p: P) -> None:
+    def update_params(self: "CIR", p: "CIR") -> None:
         assert isinstance(p, CIR)
         self.r0 = p.r0
         self.kappa = p.kappa

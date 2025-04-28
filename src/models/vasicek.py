@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from src.core.model import Model, P
+from src.core.model import Model
 
 
 class Vasicek(Model):
@@ -58,9 +58,8 @@ class Vasicek(Model):
     def params(self) -> "Vasicek":
         return self
 
-    def update_params(self, p: P) -> None:
+    def update_params(self: "Vasicek", p: "Vasicek") -> None:
         """Update model parameters."""
-        assert isinstance(p, Vasicek)
         self.r0 = p.r0
         self.kappa = p.kappa
         self.theta = p.theta
