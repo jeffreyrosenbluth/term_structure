@@ -15,21 +15,13 @@ from src.models.vasicek import Vasicek
 
 class ClosedFormMerton(PricingEngine[Merton]):
     def P(self, model: Merton, T: float) -> float:
-        p = model.params()
-        assert isinstance(p, Merton)
-        assert p.r0 is not None and p.mu is not None and p.sigma is not None
-        r0, mu, sigma = p.r0, p.mu, p.sigma
+        r0, mu, sigma = model.r0, model.mu, model.sigma
         return float(np.exp(-r0 * T - 0.5 * mu * T**2 + sigma**2 * T**3 / 6.0))
 
 
 class ClosedFormVasicek(PricingEngine[Vasicek]):
     def P(self, model: Vasicek, T: float) -> float:
-        p = model.params()
-        assert isinstance(p, Vasicek)
-        assert (
-            p.r0 is not None and p.kappa is not None and p.theta is not None and p.sigma is not None
-        )
-        r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
+        r0, kappa, theta, sigma = model.r0, model.kappa, model.theta, model.sigma
         B = (1 - math.exp(-kappa * T)) / kappa
         A = math.exp((theta - sigma**2 / (2 * kappa**2)) * (B - T) - sigma**2 * B**2 / (4 * kappa))
         return A * math.exp(-B * r0)
@@ -37,12 +29,7 @@ class ClosedFormVasicek(PricingEngine[Vasicek]):
 
 class ClosedFormCIR(PricingEngine[CIR]):
     def P(self, model: CIR, T: float) -> float:
-        p = model.params()
-        assert isinstance(p, CIR)
-        assert (
-            p.r0 is not None and p.kappa is not None and p.theta is not None and p.sigma is not None
-        )
-        r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
+        r0, kappa, theta, sigma = model.r0, model.kappa, model.theta, model.sigma
 
         h = np.sqrt(kappa**2 + 2 * sigma**2)
         exp_hT = np.exp((h * T))
@@ -66,17 +53,15 @@ class ClosedFormCIR(PricingEngine[CIR]):
 
 class ClosedFormG2(PricingEngine[G2]):
     def P(self, model: G2, T: float) -> float:
-        p = model.params()
-        assert isinstance(p, G2)
         x0, y0, a, b, rho, phi, sigma_x, sigma_y = (
-            p.x0,
-            p.y0,
-            p.a,
-            p.b,
-            p.rho,
-            p.phi,
-            p.sigma_x,
-            p.sigma_y,
+            model.x0,
+            model.y0,
+            model.a,
+            model.b,
+            model.rho,
+            model.phi,
+            model.sigma_x,
+            model.sigma_y,
         )
         term1 = (sigma_x**2 / a**2) * (
             T + (2 / a) * np.exp(-a * T) - (1 / (2 * a)) * np.exp(-2 * a * T) - (3 / (2 * a))
@@ -114,14 +99,11 @@ class ClosedFormCIR2(PricingEngine[CIR2]):
             )
             return A, B
 
-        p = model.params()
-        assert isinstance(p, CIR2)
-        assert p.sigma_x is not None and p.sigma_y is not None
-        A1, B1 = _cir_AB(p.kappa1, p.theta1, p.sigma_x, T)
-        A2, B2 = _cir_AB(p.kappa2, p.theta2, p.sigma_y, T)
+        A1, B1 = _cir_AB(model.kappa1, model.theta1, model.sigma_x, T)
+        A2, B2 = _cir_AB(model.kappa2, model.theta2, model.sigma_y, T)
 
         # Add numerical safeguards to prevent overflow
-        exp_term = -B1 * p.r0_1 - B2 * p.r0_2
+        exp_term = -B1 * model.r0_1 - B2 * model.r0_2
         if exp_term > 700:
             exp_term = 700
         elif exp_term < -700:
@@ -132,17 +114,16 @@ class ClosedFormCIR2(PricingEngine[CIR2]):
 
 class ClosedFormGV2P(PricingEngine[GV2P]):
     def P(self, model: GV2P, T: float) -> float:
-        p = model.params()
         x0, y0, z0, lambda_, gamma, sigma_x, sigma_y, k, phi = (
-            p.x0,
-            p.y0,
-            p.z0,
-            p.lambda_,
-            p.gamma,
-            p.sigma_x,
-            p.sigma_y,
-            p.k,
-            p.phi,
+            model.x0,
+            model.y0,
+            model.z0,
+            model.lambda_,
+            model.gamma,
+            model.sigma_x,
+            model.sigma_y,
+            model.k,
+            model.phi,
         )
         B = (1 - np.exp(-k * T)) / k
         C = T - (1 - np.exp(-k * T)) / k
@@ -169,19 +150,17 @@ class ClosedFormGV2P(PricingEngine[GV2P]):
 
 class ClosedFormV2(PricingEngine[V2]):
     def P(self, model: V2, T: float) -> float:
-        p = model.params()
-        assert isinstance(p, V2)
         y1_0, y2_0, k11, k21, k22, delta0, delta1, delta2, sigma1, sigma2 = (
-            p.y1_0,
-            p.y2_0,
-            p.k11,
-            p.k21,
-            p.k22,
-            p.delta0,
-            p.delta1,
-            p.delta2,
-            p.sigma1,
-            p.sigma2,
+            model.y1_0,
+            model.y2_0,
+            model.k11,
+            model.k21,
+            model.k22,
+            model.delta0,
+            model.delta1,
+            model.delta2,
+            model.sigma1,
+            model.sigma2,
         )
         B2 = (delta2 / k22) * (1 - np.exp(-k22 * T))
         B1 = (delta1 / k11) * (1 - np.exp(-k11 * T))

@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -17,8 +17,8 @@ class V2(Model):
         delta0: float,
         delta1: float,
         delta2: float,
-        sigma1: float,
-        sigma2: float,
+        sigma1: Optional[float] = None,
+        sigma2: Optional[float] = None,
         sigma1_center: Optional[float] = None,
         sigma2_center: Optional[float] = None,
     ) -> None:
@@ -30,8 +30,8 @@ class V2(Model):
         self.delta0 = delta0
         self.delta1 = delta1
         self.delta2 = delta2
-        self.sigma1 = sigma1
-        self.sigma2 = sigma2
+        self.sigma1: float = cast(float, sigma1_center if sigma1 is None else sigma1)
+        self.sigma2: float = cast(float, sigma2_center if sigma2 is None else sigma2)
         self._sigma1_bounds: Optional[Tuple[float, float]] = None
         self._sigma2_bounds: Optional[Tuple[float, float]] = None
 

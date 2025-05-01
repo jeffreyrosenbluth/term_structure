@@ -24,18 +24,18 @@ class Calibrator(Generic[P]):
         t, y = map(np.asarray, zip(*market))
 
         def residuals(theta: NDArray[np.float64]) -> NDArray[np.float64]:
-            params_cls = type(self.model.params())
+            params_cls = type(self.model)
             self.model.update_params(params_cls.from_array(theta))
             prices = np.array([self.engine.P(self.model, ti) for ti in t])
             return self.engine.spot_rate(prices, t) - y
 
-        lower, upper = self.model.params().get_bounds()
+        lower, upper = self.model.get_bounds()
 
-        theta0 = self.model.params().to_array()
+        theta0 = self.model.to_array()
         theta_star = self.solver.minimize(
             theta0,
             residuals,
             bounds=(lower, upper),
         )
-        params_cls = type(self.model.params())
+        params_cls = type(self.model)
         self.model.update_params(params_cls.from_array(theta_star))

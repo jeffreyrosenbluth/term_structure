@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -21,7 +21,7 @@ class CIR(Model):
         self.r0 = r0
         self.kappa = kappa
         self.theta = theta
-        self.sigma = sigma_center if sigma is None else sigma
+        self.sigma: float = cast(float, sigma_center if sigma is None else sigma)
         self._sigma_bounds: Optional[Tuple[float, float]] = None
 
         if sigma_center is not None:

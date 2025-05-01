@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -14,10 +14,10 @@ class GV2P(Model):
         z0: float,
         lambda_: float,
         gamma: float,
-        sigma_x: float,
-        sigma_y: float,
         k: float,
         phi: float,
+        sigma_x: Optional[float] = None,
+        sigma_y: Optional[float] = None,
         sigma_x_center: Optional[float] = None,
         sigma_y_center: Optional[float] = None,
     ) -> None:
@@ -26,8 +26,8 @@ class GV2P(Model):
         self.z0 = z0
         self.lambda_ = lambda_
         self.gamma = gamma
-        self.sigma_x = sigma_x
-        self.sigma_y = sigma_y
+        self.sigma_x: float = cast(float, sigma_x_center if sigma_x is None else sigma_x)
+        self.sigma_y: float = cast(float, sigma_y_center if sigma_y is None else sigma_y)
         self.k = k
         self.phi = phi
 

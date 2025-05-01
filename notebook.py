@@ -261,7 +261,7 @@ def _(
     cir_calib = Calibrator(cir_model, cir_engine, optimizer)
     cir_calib.calibrate(market_data)
 
-    vas_model = Vasicek(r0=0.04, kappa=0.01, theta=0.1, sigma_center=0.01)
+    vas_model = Vasicek(r0=0.04, kappa=0.01, theta=0.1, sigma=0.01)
     vas_engine = ClosedFormVasicek()
     vas_calib = Calibrator(vas_model, vas_engine, optimizer)
     vas_calib.calibrate(market_data)
