@@ -13,21 +13,26 @@ class CIR2(Model):
         r0_2: float,
         kappa1: float,
         theta1: float,
-        sigma_x: float,
         kappa2: float,
         theta2: float,
-        sigma_y: float,
+        sigma_x: Optional[float] = None,
+        sigma_y: Optional[float] = None,
         sigma_x_center: Optional[float] = None,
         sigma_y_center: Optional[float] = None,
     ) -> None:
+        if sigma_x is None and sigma_x_center is None:
+            raise ValueError("Either sigma_x or sigma_x_center must be provided")
+        if sigma_y is None and sigma_y_center is None:
+            raise ValueError("Either sigma_y or sigma_y_center must be provided")
+
         self.r0_1 = r0_1
         self.r0_2 = r0_2
         self.kappa1 = kappa1
         self.theta1 = theta1
-        self.sigma_x = sigma_x
         self.kappa2 = kappa2
         self.theta2 = theta2
-        self.sigma_y = sigma_y
+        self.sigma_x = sigma_x_center if sigma_x is None else sigma_x
+        self.sigma_y = sigma_y_center if sigma_y is None else sigma_y
         self._sigma_x_bounds: Optional[Tuple[float, float]] = None
         self._sigma_y_bounds: Optional[Tuple[float, float]] = None
 
@@ -57,9 +62,9 @@ class CIR2(Model):
                 self.r0_2,
                 self.kappa1,
                 self.theta1,
-                self.sigma_x,
                 self.kappa2,
                 self.theta2,
+                self.sigma_x,
                 self.sigma_y,
             ],
             dtype=np.float64,
@@ -68,14 +73,14 @@ class CIR2(Model):
     @classmethod
     def from_array(cls, arr: NDArray[np.float64]) -> "CIR2":  # type: ignore
         return cls(
-            r0_1=arr[0],
-            r0_2=arr[1],
-            kappa1=arr[2],
-            theta1=arr[3],
-            sigma_x=arr[4],
-            kappa2=arr[5],
-            theta2=arr[6],
-            sigma_y=arr[7],
+            r0_1=float(arr[0]),
+            r0_2=float(arr[1]),
+            kappa1=float(arr[2]),
+            theta1=float(arr[3]),
+            kappa2=float(arr[4]),
+            theta2=float(arr[5]),
+            sigma_x=float(arr[6]),
+            sigma_y=float(arr[7]),
         )
 
     @classmethod

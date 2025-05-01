@@ -2,7 +2,6 @@ import math
 from typing import Tuple
 
 import numpy as np
-from numpy.typing import NDArray
 
 from src.core.engine import PricingEngine
 from src.models.cir import CIR
@@ -10,6 +9,7 @@ from src.models.cir2 import CIR2
 from src.models.g2 import G2
 from src.models.gv2p import GV2P
 from src.models.merton import Merton
+from src.models.v2 import V2
 from src.models.vasicek import Vasicek
 
 
@@ -17,6 +17,7 @@ class ClosedFormMerton(PricingEngine[Merton]):
     def P(self, model: Merton, T: float) -> float:
         p = model.params()
         assert isinstance(p, Merton)
+        assert p.r0 is not None and p.mu is not None and p.sigma is not None
         r0, mu, sigma = p.r0, p.mu, p.sigma
         return float(np.exp(-r0 * T - 0.5 * mu * T**2 + sigma**2 * T**3 / 6.0))
 
@@ -25,6 +26,9 @@ class ClosedFormVasicek(PricingEngine[Vasicek]):
     def P(self, model: Vasicek, T: float) -> float:
         p = model.params()
         assert isinstance(p, Vasicek)
+        assert (
+            p.r0 is not None and p.kappa is not None and p.theta is not None and p.sigma is not None
+        )
         r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
         B = (1 - math.exp(-kappa * T)) / kappa
         A = math.exp((theta - sigma**2 / (2 * kappa**2)) * (B - T) - sigma**2 * B**2 / (4 * kappa))
@@ -35,6 +39,9 @@ class ClosedFormCIR(PricingEngine[CIR]):
     def P(self, model: CIR, T: float) -> float:
         p = model.params()
         assert isinstance(p, CIR)
+        assert (
+            p.r0 is not None and p.kappa is not None and p.theta is not None and p.sigma is not None
+        )
         r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
 
         h = np.sqrt(kappa**2 + 2 * sigma**2)
@@ -109,6 +116,7 @@ class ClosedFormCIR2(PricingEngine[CIR2]):
 
         p = model.params()
         assert isinstance(p, CIR2)
+        assert p.sigma_x is not None and p.sigma_y is not None
         A1, B1 = _cir_AB(p.kappa1, p.theta1, p.sigma_x, T)
         A2, B2 = _cir_AB(p.kappa2, p.theta2, p.sigma_y, T)
 
@@ -157,3 +165,39 @@ class ClosedFormGV2P(PricingEngine[GV2P]):
             A = -700
 
         return float(np.exp(A - B * z0 - C * x0 - D * y0))
+
+
+class ClosedFormV2(PricingEngine[V2]):
+    def P(self, model: V2, T: float) -> float:
+        p = model.params()
+        assert isinstance(p, V2)
+        y1_0, y2_0, k11, k21, k22, delta0, delta1, delta2, sigma1, sigma2 = (
+            p.y1_0,
+            p.y2_0,
+            p.k11,
+            p.k21,
+            p.k22,
+            p.delta0,
+            p.delta1,
+            p.delta2,
+            p.sigma1,
+            p.sigma2,
+        )
+        B2 = (delta2 / k22) * (1 - np.exp(-k22 * T))
+        B1 = (delta1 / k11) * (1 - np.exp(-k11 * T))
+        if abs(k11 - k22) > 1e-8:
+            B1 += (k21 * delta2) / (k22 * (k11 - k22)) * (np.exp(-k22 * T) - np.exp(-k11 * T))
+        else:  # special case k11 == k22
+            B1 += (k21 * delta2) / (k22**2) * T * np.exp(-k22 * T)
+
+        I2 = (delta2 / k22) ** 2 * (
+            T - 2 / k22 * (1 - np.exp(-k22 * T)) + 1 / (2 * k22) * (1 - np.exp(-2 * k22 * T))
+        )
+        # Approximate I1
+        I1 = (delta1 / k11) ** 2 * (
+            T - 2 / k11 * (1 - np.exp(-k11 * T)) + 1 / (2 * k11) * (1 - np.exp(-2 * k11 * T))
+        )
+        A = -delta0 * T + 0.5 * (sigma1**2 * I1 + sigma2**2 * I2)
+        logP = A + B1 * y1_0 + B2 * y2_0
+
+        return float(np.exp(logP))

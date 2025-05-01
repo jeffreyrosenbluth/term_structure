@@ -7,21 +7,21 @@ from src.core.model import Model
 
 
 class CIR(Model):
-    # Fixed parameter
-    sigma: float = 0.01
-
     def __init__(
         self,
         r0: float,
         kappa: float,
         theta: float,
-        sigma: float,
+        sigma: Optional[float] = None,
         sigma_center: Optional[float] = None,
     ) -> None:
+        if sigma is None and sigma_center is None:
+            raise ValueError("Either sigma or sigma_center must be provided")
+
         self.r0 = r0
         self.kappa = kappa
         self.theta = theta
-        self.sigma = sigma
+        self.sigma = sigma_center if sigma is None else sigma
         self._sigma_bounds: Optional[Tuple[float, float]] = None
 
         if sigma_center is not None:

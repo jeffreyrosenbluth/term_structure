@@ -65,7 +65,7 @@ class BinomialTree:
             p_up = self.up_probs[i]
             p_dn = 1 - p_up
             tree[i] = (
-                tree[d] * np.exp(-self.tree[d] * self.dt) * p_dn
-                + tree[u] * np.exp(-self.tree[u] * self.dt) * p_up
+                tree[d] * np.exp(-self.tree[i] * self.dt) * p_dn
+                + tree[u] * np.exp(-self.tree[i] * self.dt) * p_up
             )
         return float(tree[0])
