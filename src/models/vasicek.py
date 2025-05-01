@@ -58,7 +58,7 @@ class Vasicek(Model):
 
         return lower, upper
 
-    def update_params(self, p: "Model") -> None:
+    def update(self, p: "Model") -> None:
         """Update model parameters."""
         assert isinstance(p, Vasicek)
         self.r0 = p.r0

@@ -103,7 +103,7 @@ class V2(Model):
     def params(self) -> "V2":
         return self
 
-    def update_params(self, p: "Model") -> None:
+    def update(self, p: "Model") -> None:
         assert isinstance(p, V2)
         self.y1_0 = p.y1_0
         self.y2_0 = p.y2_0

@@ -50,7 +50,7 @@ class Merton(Model):
 
         return lower, upper
 
-    def update_params(self, p: "Model") -> None:
+    def update(self, p: "Model") -> None:
         assert isinstance(p, Merton)
         self.r0 = p.r0
         self.mu = p.mu

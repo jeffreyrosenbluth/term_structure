@@ -25,7 +25,7 @@ class Calibrator(Generic[P]):
 
         def residuals(theta: NDArray[np.float64]) -> NDArray[np.float64]:
             params_cls = type(self.model)
-            self.model.update_params(params_cls.from_array(theta))
+            self.model.update(params_cls.from_array(theta))
             prices = np.array([self.engine.P(self.model, ti) for ti in t])
             return self.engine.spot_rate(prices, t) - y
 
@@ -38,4 +38,4 @@ class Calibrator(Generic[P]):
             bounds=(lower, upper),
         )
         params_cls = type(self.model)
-        self.model.update_params(params_cls.from_array(theta_star))
+        self.model.update(params_cls.from_array(theta_star))

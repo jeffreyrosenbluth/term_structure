@@ -109,7 +109,7 @@ class GV2P(Model):
     def params(self) -> "GV2P":
         return self
 
-    def update_params(self, p: "Model") -> None:
+    def update(self, p: "Model") -> None:
         assert isinstance(p, GV2P)
         self.x0 = p.x0
         self.y0 = p.y0
