@@ -79,9 +79,6 @@ class G2(Model):
 
         return lower, upper
 
-    def params(self) -> "G2":
-        return self
-
     def update(self, p: "Model") -> None:
         assert isinstance(p, G2)
         self.x0 = p.x0

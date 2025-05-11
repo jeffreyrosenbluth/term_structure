@@ -14,8 +14,7 @@ class BinomialVasicek(PricingEngine[Vasicek]):
 
     def P(self, model: Model, T: float) -> float:
         assert isinstance(model, Vasicek)
-        p = model.params()
-        r0, kappa, theta, sigma = p.r0, p.kappa, p.theta, p.sigma
+        r0, kappa, theta, sigma = model.r0, model.kappa, model.theta, model.sigma
 
         def probability(r: float) -> float:
             return float(0.5 + kappa * (theta - r) * np.sqrt(self.dt) / (2.0 * sigma))
@@ -44,8 +43,7 @@ class BinomialMerton(PricingEngine[Merton]):
 
     def P(self, model: Model, T: float) -> float:
         assert isinstance(model, Merton)
-        p = model.params()
-        r0, mu, sigma = p.r0, p.mu, p.sigma
+        r0, mu, sigma = model.r0, model.mu, model.sigma
         periods = 1 + int(self.maxT / self.dt)
         node_count = int((periods + 1) * (periods + 2) / 2)
         tree = np.empty(node_count)
