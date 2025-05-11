@@ -52,9 +52,9 @@ def price_monte_carlo_merton(
     return float(np.mean(discount_factors))
 
 
-def plot_monte_carlo_merton(model: Merton, T: float, maxT: float, dt: float, n: int = 10) -> Figure:
+def plot_paths_merton(model: Merton, T: float, maxT: float, dt: float, n: int = 10) -> Figure:
     r0, mu, sigma = model.r0, model.mu, model.sigma
-    steps = int(T / dt)
+    steps = int(maxT / dt)
     _, cumsum_dW, time_steps = _initialize_paths(maxT, dt, n)
     paths = r0 + mu * time_steps[:steps] + sigma * np.sqrt(dt) * cumsum_dW[:, :steps]
     return plot_paths(paths, dt, n)
@@ -80,11 +80,9 @@ def price_monte_carlo_vasicek(
     return float(np.mean(discount_factors))
 
 
-def plot_monte_carlo_vasicek(
-    model: Vasicek, T: float, maxT: float, dt: float, n: int = 10
-) -> Figure:
+def plot_paths_vasicek(model: Vasicek, T: float, maxT: float, dt: float, n: int = 10) -> Figure:
     r0, kappa, theta, sigma = model.r0, model.kappa, model.theta, model.sigma
-    steps = int(T / dt)
+    steps = int(maxT / dt)
     dW, _, _ = _initialize_paths(maxT, dt, n)
     paths = np.empty((n, steps + 1))
     paths[:, 0] = r0
@@ -136,7 +134,7 @@ def price_monte_carlo_g2(
     return float(np.mean(discount_factors))
 
 
-def plot_monte_carlo_g2(model: G2, T: float, maxT: float, dt: float, n: int = 10) -> Figure:
+def plot_paths_g2(model: G2, T: float, maxT: float, dt: float, n: int = 10) -> Figure:
     x0, y0, a, b, rho, phi, sigma_x, sigma_y = (
         model.x0,
         model.y0,
@@ -147,7 +145,7 @@ def plot_monte_carlo_g2(model: G2, T: float, maxT: float, dt: float, n: int = 10
         model.sigma_x,
         model.sigma_y,
     )
-    steps = int(T / dt)
+    steps = int(maxT / dt)
     dWx, _, _ = _initialize_paths(maxT, dt, n)
     dWy, _, _ = _initialize_paths(maxT, dt, n)
 

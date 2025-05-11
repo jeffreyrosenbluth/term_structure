@@ -5,6 +5,7 @@ from numpy.typing import NDArray
 
 from src.core.model import Model
 from src.core.solver import SciPyLeastSquares
+from src.engines.binomial_tree import price_binomial_merton, price_binomial_vasicek
 from src.engines.closed_form import (
     price_closed_form_cir,
     price_closed_form_cir2,
@@ -53,6 +54,16 @@ MONTE_CARLO_ENGINES: Dict[Type[Model], Callable[[Model, float, float, float, int
     ),
     cast(Type[Model], G2): cast(
         Callable[[Model, float, float, float, int], float], price_monte_carlo_g2
+    ),
+}
+
+# Map model types to their corresponding binomial tree pricing functions
+BINOMIAL_TREE_ENGINES: Dict[Type[Model], Callable[[Model, float, float, float], float]] = {
+    cast(Type[Model], Merton): cast(
+        Callable[[Model, float, float, float], float], price_binomial_merton
+    ),
+    cast(Type[Model], Vasicek): cast(
+        Callable[[Model, float, float, float], float], price_binomial_vasicek
     ),
 }
 
@@ -172,6 +183,44 @@ class Calibrator(Generic[P]):
 
         def engine(model: P, T: float) -> float:
             return mc_engine(model, T, maxT, dt, num_paths)
+
+        return Calibrator.calibrate_model(
+            model_cls,
+            engine,
+            SciPyLeastSquares(),
+            market_data,
+            **model_kwargs,
+        )
+
+    @staticmethod
+    def calibrate_binomial_tree(
+        model_cls: Type[P],
+        market_data: Sequence[Tuple[float, float]],
+        maxT: float,
+        dt: float,
+        **model_kwargs: float,
+    ) -> Tuple[P, Callable[[P, float], float]]:
+        """Helper function to create, calibrate model and calculate prices/yields using binomial tree engine.
+
+        Args:
+            model_cls: Model class (e.g., Vasicek)
+            market_data: Sequence of (maturity, yield) pairs
+            maxT: Maximum time horizon for simulation
+            dt: Time step size for simulation
+            **model_kwargs: Initial parameters for the model
+
+        Returns:
+            Tuple of (calibrated model, engine)
+        """
+        if model_cls not in BINOMIAL_TREE_ENGINES:
+            raise ValueError(f"No binomial tree engine available for {model_cls.__name__}")
+
+        bt_engine = cast(
+            Callable[[P, float, float, float], float], BINOMIAL_TREE_ENGINES[model_cls]
+        )
+
+        def engine(model: P, T: float) -> float:
+            return bt_engine(model, T, maxT, dt)
 
         return Calibrator.calibrate_model(
             model_cls,

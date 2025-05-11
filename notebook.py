@@ -200,9 +200,12 @@ def _():
 @app.cell(hide_code=True)
 def _():
     from src.core.calibration import Calibrator
-    from src.engines.closed_form import ClosedFormCIR, ClosedFormG2, ClosedFormVasicek, ClosedFormCIR2, ClosedFormMerton, ClosedFormGV2P, ClosedFormV2, ClosedFormG2plus
-    from src.engines.binomial_tree import BinomialVasicek, BinomialMerton
-    from src.engines.monte_carlo import MonteCarloMerton, MonteCarloVasicek
+    from src.core.util import spot_rate
+
+    from src.engines.closed_form import price_closed_form_cir, price_closed_form_g2, price_closed_form_vasicek, price_closed_form_cir2, price_closed_form_merton, price_closed_form_gv2p, price_closed_form_v2, price_closed_form_g2plus
+
+    from src.engines.binomial_tree import price_binomial_vasicek, price_binomial_merton
+    from src.engines.monte_carlo import price_monte_carlo_merton, price_monte_carlo_vasicek, plot_paths_vasicek
     from src.models.cir import CIR
     from src.models.g2 import G2
     from src.models.vasicek import Vasicek
@@ -219,9 +222,15 @@ def _():
         Calibrator,
         G2,
         Merton,
-        MonteCarloVasicek,
         SciPyLeastSquares,
         Vasicek,
+        plot_paths_vasicek,
+        price_closed_form_cir,
+        price_closed_form_cir2,
+        price_closed_form_g2,
+        price_closed_form_merton,
+        price_closed_form_vasicek,
+        spot_rate,
     )
 
 
@@ -263,7 +272,22 @@ def _(plt):
 
 
 @app.cell
-def _(CIR, CIR2, Calibrator, G2, Merton, SciPyLeastSquares, Vasicek, np):
+def _(
+    CIR,
+    CIR2,
+    Calibrator,
+    G2,
+    Merton,
+    SciPyLeastSquares,
+    Vasicek,
+    np,
+    price_closed_form_cir,
+    price_closed_form_cir2,
+    price_closed_form_g2,
+    price_closed_form_merton,
+    price_closed_form_vasicek,
+    spot_rate,
+):
     market_data = [(0.25, 0.0433), (2.0, 0.0383), (5.0, 0.0392), (10.0, 0.0433), (30.0, 0.0479)]
     # market_data = [(1.0, 0.0175), (5.0, 0.0155), (10.0, 0.0168), (30.0, 0.0212)]
     # market_data = [(0.25, 0.04), (2.0, 0.0382), (10.0, 0.0411), (30.0, 0.0436), (100.0, 0.0430)]
@@ -272,24 +296,24 @@ def _(CIR, CIR2, Calibrator, G2, Merton, SciPyLeastSquares, Vasicek, np):
     optimizer = SciPyLeastSquares()
 
     merton_model, merton_engine = Calibrator.calibrate_closed_form(model_cls=Merton,market_data=market_data, r0=0.04, mu=0.002, sigma=0.002)
-    merton_prices = [merton_engine.P(merton_model, t) for t in maturities]
-    merton_yields = merton_engine.spot_rate(merton_prices, maturities)
+    merton_prices = [price_closed_form_merton(merton_model, t) for t in maturities]
+    merton_yields = spot_rate(merton_prices, maturities)
 
     vas_model, vas_engine = Calibrator.calibrate_closed_form(model_cls=Vasicek, market_data=market_data, r0=0.0, kappa=0.01, theta=0.01, sigma=0.001)
-    vas_prices = [vas_engine.P(vas_model, t) for t in maturities]
-    vas_yields = vas_engine.spot_rate(vas_prices, maturities)
+    vas_prices = [price_closed_form_vasicek(vas_model, t) for t in maturities]
+    vas_yields = spot_rate(vas_prices, maturities)
 
     cir_model, cir_engine = Calibrator.calibrate_closed_form(model_cls=CIR, market_data=market_data, r0=0.0, kappa=0.01, theta=0.00, sigma=0.02)
-    cir_prices = [cir_engine.P(cir_model, t) for t in maturities]
-    cir_yields = cir_engine.spot_rate(cir_prices, maturities)
+    cir_prices = [price_closed_form_cir(cir_model, t) for t in maturities]
+    cir_yields = spot_rate(cir_prices, maturities)
 
-    g2_model, g2_engine = Calibrator.calibrate_monte_carlo(model_cls=G2, market_data=market_data, maxT=31, dt=0.25, x0=0.0, y0=0.00, a=0.02, b=0.01, rho=-0.5, phi=0.03, sigma_x=0.05, sigma_y=0.01)
-    g2_prices = [g2_engine.P(g2_model, t) for t in maturities]
-    g2_yields = g2_engine.spot_rate(g2_prices, maturities)
+    g2_model, g2_engine = Calibrator.calibrate_closed_form(model_cls=G2, market_data=market_data, x0=0.0, y0=0.00, a=0.02, b=0.01, rho=-0.5, phi=0.03, sigma_x=0.05, sigma_y=0.01)
+    g2_prices = [price_closed_form_g2(g2_model, t) for t in maturities]
+    g2_yields = spot_rate(g2_prices, maturities)
 
     cir2_model, cir2_engine = Calibrator.calibrate_closed_form(model_cls=CIR2, market_data=market_data, r0_1=0.01, r0_2=0.01,  kappa1=0.02, kappa2=0.01, theta1=0.01, theta2=0.02, sigma_x=0.05, sigma_y=0.05)
-    cir2_prices = [cir2_engine.P(cir2_model, t) for t in maturities]
-    cir2_yields = cir2_engine.spot_rate(cir2_prices, maturities)
+    cir2_prices = [price_closed_form_cir2(cir2_model, t) for t in maturities]
+    cir2_yields = spot_rate(cir2_prices, maturities)
     return (
         cir2_model,
         cir2_yields,
@@ -352,11 +376,10 @@ def _(cir2_model, g2_model):
 
 
 @app.cell
-def _(MonteCarloVasicek, Vasicek):
+def _(Vasicek, plot_paths_vasicek):
     mc0_model = Vasicek(r0=0.0389, kappa=0.134, theta=0.0439, sigma=0.001)
-    mc0_engine = MonteCarloVasicek(50, 0.25)
     print(mc0_model)
-    mc0_engine.plot(mc0_model, 50, 30)
+    plot_paths_vasicek(mc0_model, 50, 30, 0.25, n=50)
     return
 
 
