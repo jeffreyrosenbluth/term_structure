@@ -2,7 +2,7 @@
 
 import marimo
 
-__generated_with = "0.13.2"
+__generated_with = "0.13.1"
 app = marimo.App(width="medium")
 
 
@@ -98,13 +98,44 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## G2 Model""")
+    mo.md(
+        r"""
+        ## G2 Model
+        ###Two Additive Factor Gaussian Model
+
+        \begin{aligned}
+        dx_t &= -ax_t dt + \sigma_x dW_x \\
+        dy_t &= -by_t dt + \sigma_y dW_y \\
+        r_t &= x_t + y_t + \phi\\
+        \end{aligned}
+
+        $$
+        dW_x(t) dW_y(t) = \rho
+        $$
+
+        \begin{aligned}
+        P(t, T) &= ...\\
+        \end{aligned}
+        """
+    )
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md("""## CIR2 Model""")
+    mo.md(
+        """
+        ## CIR2 Model
+        ### Two Facotor Cox Ingersol Ross Model
+        $$
+        \\begin{aligned}
+        dx_t &= -\\kappa_x(\\theta_x- x_t) dt + \\sigma_x \\sqrt{x_t} dW_x \\\\
+        dy_t &= -\\kappa_y(\\theta_y- y_t) dt + \\sigma_y \\sqrt{y_t} dW_y \\\\
+        r_t &= x_t + y_t \\\\
+        \\end{aligned}
+        $$
+        """
+    )
     return
 
 
@@ -136,57 +167,76 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        """
+        ## G2+ Model
+
+        $$
+        \\begin{aligned}
+        dx_t &= -ax_t dt + \sigma_x dW_x \\\\
+        dy_t &= -by_t dt + \sigma_y dW_y \\\\
+        dz_t &= -k(z_t - x_t - y_t) \\\\
+        r_t &= z_t + \phi\\
+        \\end{aligned}
+        $$
+        """
+    )
+    return
+
+
+@app.cell(hide_code=True)
 def _():
     import marimo as mo
     import matplotlib.pyplot as plt
     import numpy as np
     import seaborn as sns
 
+    sns.set_theme(context='notebook', style='whitegrid', palette='colorblind')
     return mo, np, plt
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     from src.core.calibration import Calibrator
-    from src.engines.closed_form import ClosedFormCIR, ClosedFormG2, ClosedFormVasicek, ClosedFormCIR2, ClosedFormMerton, ClosedFormGV2P
-    from src.engines.binomial_tree import BinomialVasicek, BinomialMerton
-    from src.engines.monte_carlo import MonteCarloMerton, MonteCarloVasicek
-    from src.models.cir import CIR, CIRParams
-    from src.models.g2 import G2, G2Params
-    from src.models.vasicek import Vasicek, VasicekParams
-    from src.models.cir2 import CIR2, CIR2Params
-    from src.models.merton import Merton, MertonParams
-    from src.models.gv2p import GV2P, GV2PParams
+    from src.core.util import spot_rate
+
+    from src.engines.closed_form import price_closed_form_cir, price_closed_form_g2, price_closed_form_vasicek, price_closed_form_cir2, price_closed_form_merton, price_closed_form_gv2p, price_closed_form_v2, price_closed_form_g2plus
+
+    from src.engines.binomial_tree import price_binomial_vasicek, price_binomial_merton
+    from src.engines.monte_carlo import price_monte_carlo_merton, price_monte_carlo_vasicek, plot_paths_vasicek
+    from src.models.cir import CIR
+    from src.models.g2 import G2
+    from src.models.vasicek import Vasicek
+    from src.models.cir2 import CIR2
+    from src.models.merton import Merton
+    from src.models.gv2p import GV2P
+    from src.models.v2 import V2
+    from src.models.g2_plus import G2plus
     from src.optim.least_squares import SciPyLeastSquares
 
     return (
         CIR,
         CIR2,
-        CIR2Params,
-        CIRParams,
         Calibrator,
-        ClosedFormCIR,
-        ClosedFormCIR2,
-        ClosedFormG2,
-        ClosedFormGV2P,
-        ClosedFormMerton,
-        ClosedFormVasicek,
         G2,
-        G2Params,
-        GV2P,
-        GV2PParams,
         Merton,
-        MertonParams,
         SciPyLeastSquares,
         Vasicek,
-        VasicekParams,
+        plot_paths_vasicek,
+        price_closed_form_cir,
+        price_closed_form_cir2,
+        price_closed_form_g2,
+        price_closed_form_merton,
+        price_closed_form_vasicek,
+        spot_rate,
     )
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(plt):
-    def plot_yield_curve(maturities, merton_yields, vas_yields, cir_yields, g2_yields, cir2_yields, gv2p_yields, market_data, factors: int = 1):
+    def plot_yield_curve(maturities, merton_yields, vas_yields, cir_yields, g2_yields, cir2_yields, market_data, factors: int = 1):
         fig, ax = plt.subplots(figsize=(11, 6))
         if factors == 1:
             ax.plot(maturities, 100 * merton_yields)
@@ -195,7 +245,7 @@ def _(plt):
         elif factors == 2:
             ax.plot(maturities, 100 * g2_yields)
             ax.plot(maturities, 100 * cir2_yields)
-            ax.plot(maturities, 100 * gv2p_yields)
+            # ax.plot(maturities, 100 * g2p_yields)
         t_mkt, y_mkt = zip(*market_data)
         y_mkt = [y * 100.0 for y in y_mkt]
         ax.scatter(t_mkt, y_mkt,
@@ -213,7 +263,7 @@ def _(plt):
             ax.legend(["Merton", "Vasicek", "CIR"], edgecolor='none', borderpad=2)
             ax.set_title( "One Factor Short Rate Models", fontsize=20, pad=15)
         elif factors == 2:
-            ax.legend(["G2", "CIR2", "GV2P"], edgecolor='none', borderpad=2)
+            ax.legend(["G2", "CIR2"], edgecolor='none', borderpad=2)
             ax.set_title( "Two Factor Short Rate Models", fontsize=20, pad=15)
         fig.tight_layout()
         plt.show()
@@ -225,145 +275,81 @@ def _(plt):
 def _(
     CIR,
     CIR2,
-    CIR2Params,
-    CIRParams,
     Calibrator,
-    ClosedFormCIR,
-    ClosedFormCIR2,
-    ClosedFormG2,
-    ClosedFormGV2P,
-    ClosedFormMerton,
-    ClosedFormVasicek,
     G2,
-    G2Params,
-    GV2P,
-    GV2PParams,
     Merton,
-    MertonParams,
     SciPyLeastSquares,
     Vasicek,
-    VasicekParams,
+    np,
+    price_closed_form_cir,
+    price_closed_form_cir2,
+    price_closed_form_g2,
+    price_closed_form_merton,
+    price_closed_form_vasicek,
+    spot_rate,
 ):
-    # market_data = [(0.25, 0.04), (2.0, 0.041), (10.0, 0.045), (30.0, 0.05)]
+    market_data = [(0.25, 0.0433), (2.0, 0.0383), (5.0, 0.0392), (10.0, 0.0433), (30.0, 0.0479)]
     # market_data = [(1.0, 0.0175), (5.0, 0.0155), (10.0, 0.0168), (30.0, 0.0212)]
-    market_data = [(0.25, 0.04), (1.0, 0.0398), (2.0, 0.0382), (5.0, 0.0391), (10.0, 0.0411), (15.0, 0.0425), (20.0, 0.0430), (29.0, 0.0435), (30.0, 0.0436)]
+    # market_data = [(0.25, 0.04), (2.0, 0.0382), (10.0, 0.0411), (30.0, 0.0436), (100.0, 0.0430)]
 
+    maturities = np.linspace(0.25, 50, 200)
     optimizer = SciPyLeastSquares()
 
-    merton_params0 = MertonParams(r0=0.04, mu=0.0, sigma=0.01)
-    merton_model = Merton(merton_params0)
-    merton_engine = ClosedFormMerton()
-    merton_calib = Calibrator(merton_model, merton_engine, optimizer)
-    merton_calib.calibrate(market_data)
+    merton_model, merton_engine = Calibrator.calibrate_closed_form(model_cls=Merton,market_data=market_data, r0=0.04, mu=0.002, sigma=0.002)
+    merton_prices = [price_closed_form_merton(merton_model, t) for t in maturities]
+    merton_yields = spot_rate(merton_prices, maturities)
 
-    g2_params0 = G2Params(x0=0.0, y0=0.0, a=0.02, b=0.01, rho=-0.5, phi=0.03, sigma_x=0.05, sigma_y=0.01)
-    g2_model = G2(g2_params0)
-    g2_engine = ClosedFormG2()
-    g2_calib = Calibrator(g2_model, g2_engine, optimizer)
-    g2_calib.calibrate(market_data)
+    vas_model, vas_engine = Calibrator.calibrate_closed_form(model_cls=Vasicek, market_data=market_data, r0=0.0, kappa=0.01, theta=0.01, sigma=0.001)
+    vas_prices = [price_closed_form_vasicek(vas_model, t) for t in maturities]
+    vas_yields = spot_rate(vas_prices, maturities)
 
-    cir_params0 = CIRParams(r0=0.0, kappa=0.0, theta=0.00, sigma=0.01)
-    cir_model = CIR(cir_params0)
-    cir_engine = ClosedFormCIR()
-    cir_calib = Calibrator(cir_model, cir_engine, optimizer)
-    cir_calib.calibrate(market_data)
+    cir_model, cir_engine = Calibrator.calibrate_closed_form(model_cls=CIR, market_data=market_data, r0=0.0, kappa=0.01, theta=0.00, sigma=0.02)
+    cir_prices = [price_closed_form_cir(cir_model, t) for t in maturities]
+    cir_yields = spot_rate(cir_prices, maturities)
 
-    vas_params0 = VasicekParams(r0=0.04, kappa=0.01, theta=0.1, sigma=0.01)
-    vas_model = Vasicek(vas_params0)
-    vas_engine = ClosedFormVasicek()
-    vas_calib = Calibrator(vas_model, vas_engine, optimizer)
-    vas_calib.calibrate(market_data)
+    g2_model, g2_engine = Calibrator.calibrate_closed_form(model_cls=G2, market_data=market_data, x0=0.0, y0=0.00, a=0.02, b=0.01, rho=-0.5, phi=0.03, sigma_x=0.05, sigma_y=0.01)
+    g2_prices = [price_closed_form_g2(g2_model, t) for t in maturities]
+    g2_yields = spot_rate(g2_prices, maturities)
 
-    cir2_params0 = CIR2Params(r0_1=0.01, r0_2=0.01, kappa1=0.02, kappa2=0.01, theta1=0.1, 
-                              theta2=0.2, sigma_x=0.05, sigma_y=0.05)
-    cir2_model = CIR2(cir2_params0)
-    cir2_engine = ClosedFormCIR2()
-    cir2_calib = Calibrator(cir2_model, cir2_engine, optimizer)
-    cir2_calib.calibrate(market_data)
-
-    gv2p_params0 = GV2PParams(x0=0.0, y0=0.0, z0=0.0, gamma=0.5, k=0.2,lambda_=0.01,phi=0.005, sigma_x=0.005, sigma_y=0.03)
-    gv2p_model = GV2P(gv2p_params0)
-    gv2p_engine = ClosedFormGV2P()
-    gv2p_calib = Calibrator(gv2p_model, gv2p_engine, optimizer)
-    gv2p_calib.calibrate(market_data)
+    cir2_model, cir2_engine = Calibrator.calibrate_closed_form(model_cls=CIR2, market_data=market_data, r0_1=0.01, r0_2=0.01,  kappa1=0.02, kappa2=0.01, theta1=0.01, theta2=0.02, sigma_x=0.05, sigma_y=0.05)
+    cir2_prices = [price_closed_form_cir2(cir2_model, t) for t in maturities]
+    cir2_yields = spot_rate(cir2_prices, maturities)
     return (
-        cir2_engine,
         cir2_model,
-        cir_engine,
-        cir_model,
-        g2_engine,
-        g2_model,
-        gv2p_engine,
-        gv2p_model,
-        market_data,
-        merton_engine,
-        merton_model,
-        vas_engine,
-        vas_model,
-    )
-
-
-@app.cell
-def _(
-    cir2_engine,
-    cir2_model,
-    cir_engine,
-    cir_model,
-    g2_engine,
-    g2_model,
-    gv2p_engine,
-    gv2p_model,
-    merton_engine,
-    merton_model,
-    np,
-    vas_engine,
-    vas_model,
-):
-    maturities = np.linspace(0.25, 30, 120)
-
-    merton_prices = [merton_engine.P(merton_model, t) for t in maturities]
-    merton_yields = merton_engine.spot_rate(merton_prices, maturities)
-
-    g2_prices = [g2_engine.P(g2_model, t) for t in maturities]
-    g2_yields = g2_engine.spot_rate(g2_prices, maturities)
-
-    cir_prices = [cir_engine.P(cir_model, t) for t in maturities]
-    cir_yields = cir_engine.spot_rate(cir_prices, maturities)
-
-    vas_prices = [vas_engine.P(vas_model, t) for t in maturities]
-    vas_yields = vas_engine.spot_rate(vas_prices, maturities)
-
-    cir2_prices = [cir2_engine.P(cir2_model, t) for t in maturities]
-    cir2_yields = cir2_engine.spot_rate(cir2_prices, maturities)
-
-    gv2p_prices = [gv2p_engine.P(gv2p_model, t) for t in maturities]
-    gv2p_yields = gv2p_engine.spot_rate(gv2p_prices, maturities)
-    return (
         cir2_yields,
+        cir_model,
         cir_yields,
+        g2_model,
         g2_yields,
-        gv2p_yields,
+        market_data,
         maturities,
+        merton_model,
         merton_yields,
+        vas_model,
         vas_yields,
     )
 
 
 @app.cell
-def _(merton_model):
+def _(cir_model, merton_model, vas_model):
     print(merton_model)
-    return
-
-
-@app.cell
-def _(cir_model):
+    print(vas_model)
     print(cir_model)
     return
 
 
 @app.cell
-def _(vas_model):
-    print(vas_model)
+def _(
+    cir2_yields,
+    cir_yields,
+    g2_yields,
+    market_data,
+    maturities,
+    merton_yields,
+    plot_yield_curve,
+    vas_yields,
+):
+    plot_yield_curve(maturities, merton_yields, vas_yields, cir_yields, g2_yields, cir2_yields, market_data)
     return
 
 
@@ -372,48 +358,33 @@ def _(
     cir2_yields,
     cir_yields,
     g2_yields,
-    gv2p_yields,
     market_data,
     maturities,
     merton_yields,
     plot_yield_curve,
     vas_yields,
 ):
-    plot_yield_curve(maturities, merton_yields, vas_yields, cir_yields, g2_yields, cir2_yields, gv2p_yields, market_data)
+    plot_yield_curve(maturities, merton_yields, vas_yields, cir_yields, g2_yields, cir2_yields, market_data, factors=2)
     return
 
 
 @app.cell
-def _(
-    cir2_yields,
-    cir_yields,
-    g2_yields,
-    gv2p_yields,
-    market_data,
-    maturities,
-    merton_yields,
-    plot_yield_curve,
-    vas_yields,
-):
-    plot_yield_curve(maturities, merton_yields, vas_yields, cir_yields, g2_yields, cir2_yields, gv2p_yields, market_data, factors=2)
-    return
-
-
-@app.cell
-def _(g2_model):
+def _(cir2_model, g2_model):
     print(g2_model)
-    return
-
-
-@app.cell
-def _(cir2_model):
     print(cir2_model)
     return
 
 
 @app.cell
-def _(gv2p_model):
-    print(gv2p_model)
+def _(Vasicek, plot_paths_vasicek):
+    mc0_model = Vasicek(r0=0.0389, kappa=0.134, theta=0.0439, sigma=0.001)
+    print(mc0_model)
+    plot_paths_vasicek(mc0_model, 50, 50, 0.25, n=50)
+    return
+
+
+@app.cell
+def _():
     return
 
 
