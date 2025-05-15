@@ -1,3 +1,13 @@
+"""Calibration module for interest rate models.
+
+This module provides functionality for calibrating various interest rate models to market data.
+It supports multiple pricing engines including closed-form solutions, Monte Carlo simulation,
+and binomial tree methods.
+
+The calibration process involves finding model parameters that minimize the difference between
+model-implied yields and market-observed yields across different maturities.
+"""
+
 from typing import Any, Callable, Dict, Generic, Sequence, Tuple, Type, TypeVar, cast
 
 import numpy as np
@@ -69,17 +79,47 @@ BINOMIAL_TREE_ENGINES: Dict[Type[Model], Callable[[Model, float, float, float], 
 
 
 class Calibrator(Generic[P]):
+    """A generic class for calibrating interest rate models to market data.
+
+    The Calibrator class provides functionality to find optimal model parameters that
+    minimize the difference between model-implied yields and market-observed yields.
+    It supports different pricing engines and optimization solvers.
+
+    Type Parameters:
+        P: The type of the interest rate model, must be a subclass of Model
+
+    Attributes:
+        model: The interest rate model to be calibrated
+        engine: The pricing function used to calculate model prices
+        solver: The optimization solver used to find optimal parameters
+    """
+
     def __init__(
         self,
         model: P,
         engine: Callable[[P, float], float],
         solver: Any,
     ) -> None:
+        """Initialize the calibrator with a model, pricing engine, and solver.
+
+        Args:
+            model: The interest rate model to be calibrated
+            engine: Function that calculates bond prices for given maturities
+            solver: Optimization solver for finding optimal parameters
+        """
         self.model = model
         self.engine = engine
         self.solver = solver
 
     def calibrate(self, market: Sequence[Tuple[float, float]]) -> None:
+        """Calibrate the model to market data.
+
+        This method finds the optimal model parameters that minimize the difference
+        between model-implied yields and market-observed yields.
+
+        Args:
+            market: Sequence of (maturity, yield) pairs representing market data
+        """
         t, y = map(np.asarray, zip(*market))
 
         def residuals(theta: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -140,6 +180,9 @@ class Calibrator(Generic[P]):
 
         Returns:
             Tuple of (calibrated model, engine)
+
+        Raises:
+            ValueError: If no closed-form engine is available for the model
         """
         if model_cls not in CLOSED_FORM_ENGINES:
             raise ValueError(f"No closed-form engine available for {model_cls.__name__}")
@@ -173,6 +216,9 @@ class Calibrator(Generic[P]):
 
         Returns:
             Tuple of (calibrated model, engine)
+
+        Raises:
+            ValueError: If no Monte Carlo engine is available for the model
         """
         if model_cls not in MONTE_CARLO_ENGINES:
             raise ValueError(f"No Monte Carlo engine available for {model_cls.__name__}")
@@ -211,6 +257,9 @@ class Calibrator(Generic[P]):
 
         Returns:
             Tuple of (calibrated model, engine)
+
+        Raises:
+            ValueError: If no binomial tree engine is available for the model
         """
         if model_cls not in BINOMIAL_TREE_ENGINES:
             raise ValueError(f"No binomial tree engine available for {model_cls.__name__}")

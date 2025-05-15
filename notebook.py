@@ -379,7 +379,7 @@ def _(cir2_model, g2_model):
 def _(Vasicek, plot_paths_vasicek):
     mc0_model = Vasicek(r0=0.0389, kappa=0.134, theta=0.0439, sigma=0.001)
     print(mc0_model)
-    plot_paths_vasicek(mc0_model, 50, 30, 0.25, n=50)
+    plot_paths_vasicek(mc0_model, 50, 50, 0.25, n=50)
     return
 
 
